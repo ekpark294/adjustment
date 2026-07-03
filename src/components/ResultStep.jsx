@@ -13,7 +13,10 @@ function ResultStep({ people, items, onBack }) {
   const totalRef = useRef(null);
   const menuTableRef = useRef(null);
   const peopleCardRef = useRef(null);
-  const [imageProgress, setImageProgress] = useState({ section: "", percent: 0 });
+  const [imageProgress, setImageProgress] = useState({
+    section: "",
+    percent: 0,
+  });
   const totals = useMemo(() => calculateTotals(people, items), [people, items]);
   const grandTotal = useMemo(() => calculateGrandTotal(items), [items]);
 
@@ -84,8 +87,13 @@ function ResultStep({ people, items, onBack }) {
           <table ref={menuTableRef}>
             <thead>
               <tr>
-                <th>번호</th><th>메뉴</th><th>가격</th><th>수량</th>
-                <th>인원</th><th>분배 금액</th><th>비고</th>
+                <th>번호</th>
+                <th>메뉴</th>
+                <th>가격</th>
+                <th>수량</th>
+                <th>인원</th>
+                <th>분배 금액</th>
+                <th>비고</th>
               </tr>
             </thead>
             <tbody>
@@ -102,12 +110,20 @@ function ResultStep({ people, items, onBack }) {
                   return (
                     <tr key={item.id}>
                       <td className="menu-number">{index + 1}</td>
-                      <td><b>{item.menu}</b></td>
+                      <td>
+                        <b>{item.menu}</b>
+                      </td>
                       <td>₩{money.format(Number(item.price))}</td>
                       <td>{item.quantity}</td>
                       <td>{item.members.length}</td>
-                      <td><strong>₩ {money.format(share)}</strong></td>
-                      <td>{item.members.length ? item.members.join(", ") : "선택된 사람 없음"}</td>
+                      <td>
+                        <strong>₩ {money.format(share)}</strong>
+                      </td>
+                      <td>
+                        {item.members.length
+                          ? item.members.join(", ")
+                          : "선택된 사람 없음"}
+                      </td>
                     </tr>
                   );
                 })}
@@ -117,14 +133,19 @@ function ResultStep({ people, items, onBack }) {
       </section>
       <button
         className="image-save-button"
-        onClick={() => saveImage(menuTableRef, "메뉴별분배내역", "menu", "#ffffff")}
+        onClick={() =>
+          saveImage(menuTableRef, "메뉴별분배내역", "menu", "#ffffff")
+        }
         disabled={Boolean(imageProgress.section)}
       >
         {imageButtonText("menu", "메뉴별 분배 내역 이미지 저장")}
       </button>
       <div className="people-summary">
         <div className="section-heading people-heading">
-          <div><p>SETTLEMENT</p><h2>사람별 정산 금액</h2></div>
+          <div>
+            <p>SETTLEMENT</p>
+            <h2>인원별 정산 금액</h2>
+          </div>
         </div>
         <div className="card result-card" ref={peopleCardRef}>
           {people.map((person, index) => (
@@ -138,20 +159,27 @@ function ResultStep({ people, items, onBack }) {
       </div>
       <button
         className="image-save-button"
-        onClick={() => saveImage(peopleCardRef, "사람별정산금액", "people", "#ffffff")}
+        onClick={() =>
+          saveImage(peopleCardRef, "인원별정산금액", "people", "#ffffff")
+        }
         disabled={Boolean(imageProgress.section)}
       >
-        {imageButtonText("people", "사람별 정산 금액 이미지 저장")}
+        {imageButtonText("people", "인원별 정산 금액 이미지 저장")}
       </button>
       <div className="actions">
-        <button className="back" onClick={onBack}>← 수정하기</button>
+        <button className="back" onClick={onBack}>
+          ← 수정하기
+        </button>
         <div className="result-buttons">
           <button
             className="copy-button"
             onClick={() =>
               navigator.clipboard?.writeText(
                 Object.entries(totals)
-                  .map(([person, total]) => `${person}: ${money.format(Math.round(total))}원`)
+                  .map(
+                    ([person, total]) =>
+                      `${person}: ${money.format(Math.round(total))}원`,
+                  )
                   .join("\n"),
               )
             }
