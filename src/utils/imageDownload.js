@@ -1,11 +1,10 @@
-import { toPng } from "html-to-image";
-
 export const downloadSectionImage = async (
   target,
   fileName,
   sectionName,
   backgroundColor = "#f5f4ee",
 ) => {
+  const { toPng } = await import("html-to-image");
   const tableWidth = target.matches?.("table")
     ? target.scrollWidth
     : target.querySelector("table")?.scrollWidth || 0;

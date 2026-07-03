@@ -80,11 +80,7 @@ function ParticipantsStep({
           ))}
         </div>
       </div>
-      <button
-        className="primary"
-        disabled={people.length < 2}
-        onClick={onNext}
-      >
+      <button className="primary" disabled={people.length < 2} onClick={onNext}>
         주문 내역 입력하기 <span>→</span>
       </button>
       {people.length < 2 && <small>정산하려면 2명 이상 추가해주세요.</small>}
@@ -97,7 +93,10 @@ function ParticipantsStep({
           <div className="drafts-list">
             {drafts.map((draft) => (
               <article className="card draft-card" key={draft.id}>
-                <button className="draft-load" onClick={() => onLoadDraft(draft)}>
+                <button
+                  className="draft-load"
+                  onClick={() => onLoadDraft(draft)}
+                >
                   <b>
                     {draft.people.slice(0, 3).join(", ")}
                     {draft.people.length > 3
