@@ -101,6 +101,8 @@ Thumbs.db
 *.png
 *.jpg
 *.jpeg
+!mobile/assets/hanip-icon.png
+!mobile/assets/favicon.png
 # docs/ 하위 PNG 파일 추적 허용
 !docs/**/*.png
 

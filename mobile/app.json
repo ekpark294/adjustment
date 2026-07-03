@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "한입정산",
+    "slug": "hanip-settlement",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/hanip-icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "hanip-settlement",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.hanip.settlement",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F4EE",
+        "foregroundImage": "./assets/hanip-icon.png"
+      },
+      "permissions": []
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
