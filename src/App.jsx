@@ -22,6 +22,12 @@ function App() {
     setName('')
   }
 
+  const handlePersonKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.nativeEvent.isComposing || event.repeat) return
+    event.preventDefault()
+    addPerson()
+  }
+
   const removePerson = (person) => {
     setPeople(people.filter((item) => item !== person))
     setItems(items.map((item) => ({ ...item, members: item.members.filter((member) => member !== person) })))
@@ -95,7 +101,7 @@ function App() {
     <main className="shell">
       <header>
         <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setStep(1) }}>
-          <span className="logo">÷</span><span>한입정산</span>
+          <span className="logo">÷</span><span>한입정산</span><small className="version">v1.0.1</small>
         </a>
         <div className="steps" aria-label="진행 단계">
           <span className={step === 1 ? 'active' : ''}>1. 참여자</span>
@@ -114,7 +120,7 @@ function App() {
           <div className="card people-card">
             <label htmlFor="person">참여자 이름</label>
             <div className="input-row">
-              <input id="person" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addPerson()} placeholder="이름을 입력하세요" autoFocus />
+              <input id="person" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={handlePersonKeyDown} placeholder="이름을 입력하세요" autoFocus />
               <button className="add" onClick={addPerson} aria-label="참여자 추가">＋</button>
             </div>
             <div className="people-list">
