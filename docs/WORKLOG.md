@@ -165,8 +165,14 @@ npx vercel@37.14.0 --prod
 
 ## 주요 파일
 
-- `src/App.jsx`: 화면 흐름, 상태, 계산, 이미지 저장 로직
+- `src/App.jsx`: 화면 단계와 공통 상태 연결
+- `src/components/`: 헤더, 푸터, 참여자·주문·결과 단계 화면
+- `src/hooks/useDrafts.js`: 로컬 임시 저장 관리
+- `src/utils/settlement.js`: 정산 금액 계산과 금액 표시
+- `src/utils/imageDownload.js`: PNG 이미지 생성 및 다운로드
 - `src/styles.css`: 전체 UI와 반응형 스타일
 - `src/main.jsx`: React 진입점
 - `vite.config.js`: Vite React 설정
 - `package.json`: 실행 명령과 패키지 구성
+
+이미지 저장 버튼은 생성 단계의 추정 진행률을 표시하며, 파일 생성이 완료되면 100%로 표시합니다. `html-to-image`가 내부 렌더링 진행률을 제공하지 않으므로 중간 퍼센트는 실제 처리량이 아닌 대기 상태 안내용입니다.

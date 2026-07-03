@@ -74,6 +74,7 @@ C:\\home\\ttreeweb\\wwwLogs\*
 
 # Node.js (프론트엔드)
 node_modules/
+dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
