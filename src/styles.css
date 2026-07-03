@@ -24,8 +24,10 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
 .people-list { display: grid; gap: 8px; margin-top: 18px; }.empty { margin: 10px 0; text-align: center; color: #aaa99f; font-size: 13px; }
 .person { display: flex; align-items: center; gap: 11px; padding: 8px; border-radius: 10px; background: #f6f6f1; font-size: 14px; }.avatar { width: 31px; height: 31px; display: grid; place-items: center; flex: none; border-radius: 50%; color: #687500; background: #eaff62; font-size: 11px; font-weight: 800; }.person button { margin-left: auto; border: 0; background: transparent; color: #aaa; font-size: 20px; }
 .primary { min-width: 210px; height: 52px; padding: 0 25px; margin-top: 24px; border: 0; border-radius: 10px; color: #fff; background: #22231f; font-weight: 700; }.primary span { margin-left: 30px; }.primary:disabled { cursor: not-allowed; opacity: .35; }.intro small { display: block; margin-top: 10px; color: #aaa; font-size: 11px; }
+.drafts-section { margin-top: 48px; text-align: left; }.drafts-heading { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 12px; }.drafts-heading b { font-size: 15px; }.drafts-heading span { color: #88887f; font-size: 11px; }.drafts-list { display: grid; gap: 9px; }.draft-card { display: flex; align-items: center; min-width: 0; padding: 8px 10px 8px 16px; }.draft-load { display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: flex-start; gap: 4px; padding: 7px 0; border: 0; background: transparent; text-align: left; }.draft-load b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }.draft-load span { color: #8a8a81; font-size: 10px; }.draft-delete { flex: none; padding: 8px; border: 0; color: #ad6b64; background: transparent; font-size: 11px; }
 .orders h1, .result h1 { font-size: 50px; }.orders-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 20px 0 30px; }.orders-toolbar .lead { margin: 0; }.top-add { flex: none; height: 42px; padding: 0 17px; border: 1px solid #30312b; border-radius: 9px; color: #fff; background: #22231f; font-size: 12px; font-weight: 700; }.top-add:hover { background: #3a3b34; }.order-list { display: grid; gap: 18px; }.order-card { padding: 25px; }
 .order-nav { margin: -12px 0 18px; padding-bottom: 16px; border-bottom: 1px solid #deddd4; }.order-nav .primary { height: 46px; min-width: 190px; margin: 0; }.order-nav .back { padding: 0 8px; }
+.order-nav-buttons { display: flex; gap: 8px; }.draft-save { height: 46px; padding: 0 16px; border: 1px solid #cfd0c6; border-radius: 9px; color: #616259; background: #fff; font-size: 12px; font-weight: 700; }
 .order-title { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }.order-title > span { color: #9aab24; font-family: 'DM Serif Display'; font-size: 22px; }.order-title h2 { margin: 0; font-size: 16px; }.order-title button { margin-left: auto; border: 0; color: #b06b63; background: none; font-size: 12px; }
 .fields { display: grid; grid-template-columns: 1.5fr 1fr .6fr; gap: 12px; }.fields input { margin-top: 8px; }.fields label:nth-child(2) { position: relative; }.fields label:nth-child(2) span { position: absolute; right: 12px; bottom: 14px; color: #999; font-size: 12px; }
 .member-select { margin-top: 23px; padding-top: 20px; border-top: 1px solid #ecebe5; }.member-select > div:first-child { display: flex; justify-content: space-between; font-size: 12px; }.member-select > div:first-child button { border: 0; background: none; color: #819000; font-size: 11px; }
@@ -72,6 +74,8 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
   .result-buttons { min-width: 0; flex: 1; flex-direction: column; }
   .result-buttons .primary, .result-buttons .copy-button { width: 100%; min-width: 0; margin: 0; }
   .order-nav { align-items: center; }
+  .order-nav-buttons { min-width: 0; }
+  .draft-save { padding: 0 12px; white-space: nowrap; }
   .order-nav .primary { width: auto; min-width: 170px; }
 }
 
@@ -86,5 +90,6 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
   .actions:not(.order-nav) > .back { min-height: 42px; order: 2; }
   .result-buttons { order: 1; }
   .order-nav { flex-direction: row; }
+  .order-nav-buttons { flex: 1; }
   .order-nav .primary { flex: 1; min-width: 0; padding: 0 12px; }
 }
