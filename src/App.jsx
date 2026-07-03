@@ -183,7 +183,7 @@ function App() {
         >
           <span className="logo">÷</span>
           <span>한입정산</span>
-          <small className="version">v1.0.2</small>
+          <small className="version">v1.0.3</small>
         </a>
         <div className="steps" aria-label="진행 단계">
           <span className={step === 1 ? "active" : ""}>1. 참여자</span>
