@@ -14,9 +14,10 @@ export const getItemParticipantQuantities = (item) => {
   }
 
   return Object.fromEntries(
-    Object.entries(item.memberQuantities || {}).filter(
-      ([, quantity]) => parseCount(quantity) > 0,
-    ),
+    (item.members || []).map((person) => [
+      person,
+      parseCount(item.memberQuantities?.[person]) || 1,
+    ]),
   );
 };
 

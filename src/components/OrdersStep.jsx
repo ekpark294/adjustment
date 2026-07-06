@@ -49,16 +49,18 @@ function OrdersStep({
     if (!item) return;
 
     if (isIndividualQuantityItem(item)) {
+      const isSelected = item.members.includes(person);
+      const members = isSelected
+        ? item.members.filter((member) => member !== person)
+        : [...item.members, person];
       const memberQuantities = { ...(item.memberQuantities || {}) };
-      if (parseCount(memberQuantities[person])) {
-        delete memberQuantities[person];
-      } else {
+      if (!isSelected && !parseCount(memberQuantities[person])) {
         memberQuantities[person] = 1;
       }
-
+      if (isSelected) delete memberQuantities[person];
       updateItem(id, {
         memberQuantities,
-        members: Object.keys(memberQuantities),
+        members,
       });
       return;
     }
@@ -92,7 +94,7 @@ function OrdersStep({
 
   const toggleAllMembers = (item) => {
     if (isIndividualQuantityItem(item)) {
-      const isAllSelected = getItemParticipants(item).length === people.length;
+      const isAllSelected = item.members.length === people.length;
       updateItem(item.id, {
         members: isAllSelected ? [] : [...people],
         memberQuantities: isAllSelected
@@ -114,17 +116,16 @@ function OrdersStep({
 
   const updateMemberQuantity = (item, person, value) => {
     const quantity = normalizeCountInput(value);
-    const memberQuantities = { ...(item.memberQuantities || {}) };
+    if (parseCount(quantity) < 1) return;
 
-    if (quantity === "") {
-      delete memberQuantities[person];
-    } else {
-      memberQuantities[person] = quantity;
-    }
+    const memberQuantities = { ...(item.memberQuantities || {}) };
+    memberQuantities[person] = quantity;
 
     updateItem(item.id, {
       memberQuantities,
-      members: Object.keys(memberQuantities),
+      members: item.members.includes(person)
+        ? item.members
+        : [...item.members, person],
     });
   };
 
@@ -270,7 +271,7 @@ function OrdersStep({
                 <div className="member-buttons">
                   {people.map((person) => {
                     const isSelected = isIndividualQuantityItem(item)
-                      ? parseCount(item.memberQuantities?.[person])
+                      ? item.members.includes(person)
                       : item.members.includes(person);
 
                     return (
@@ -289,9 +290,9 @@ function OrdersStep({
                           {isIndividualQuantityItem(item) && isSelected ? (
                             <div className="person-quantity-control">
                               <input
-                                type="number"
-                                min="1"
-                                value={item.memberQuantities?.[person] || ""}
+                              type="number"
+                              min="1"
+                              value={item.memberQuantities?.[person] || 1}
                                 onChange={(event) =>
                                   updateMemberQuantity(
                                     item,
