@@ -29,10 +29,7 @@ function OrdersStep({
       current.map((item) => (item.id === id ? { ...item, ...patch } : item)),
     );
 
-  const normalizeCountInput = (value) => {
-    const digits = value.replace(/\D/g, "");
-    return digits === "" ? "" : String(Number(digits));
-  };
+  const normalizeCountInput = (value) => value.replace(/\D/g, "");
 
   const normalizeQuantityOnBlur = (id, value) => {
     if (!parseCount(value)) updateItem(id, { quantity: 1 });
@@ -49,19 +46,18 @@ function OrdersStep({
     if (!item) return;
 
     if (isIndividualQuantityItem(item)) {
-      const isSelected = item.members.includes(person);
-      const members = isSelected
+      const members = item.members.includes(person)
         ? item.members.filter((member) => member !== person)
         : [...item.members, person];
+
       const memberQuantities = { ...(item.memberQuantities || {}) };
-      if (!isSelected && !parseCount(memberQuantities[person])) {
-        memberQuantities[person] = 1;
+      if (!members.includes(person)) {
+        delete memberQuantities[person];
+      } else if (!parseCount(memberQuantities[person])) {
+        memberQuantities[person] = "1";
       }
-      if (isSelected) delete memberQuantities[person];
-      updateItem(id, {
-        memberQuantities,
-        members,
-      });
+
+      updateItem(id, { members, memberQuantities });
       return;
     }
 
@@ -78,7 +74,7 @@ function OrdersStep({
         memberQuantities: Object.fromEntries(
           item.members.map((person) => [
             person,
-            item.memberQuantities?.[person] || 1,
+            item.memberQuantities?.[person] || "1",
           ]),
         ),
       });
@@ -102,7 +98,7 @@ function OrdersStep({
           : Object.fromEntries(
               people.map((person) => [
                 person,
-                item.memberQuantities?.[person] || 1,
+                item.memberQuantities?.[person] || "1",
               ]),
             ),
       });
@@ -116,8 +112,6 @@ function OrdersStep({
 
   const updateMemberQuantity = (item, person, value) => {
     const quantity = normalizeCountInput(value);
-    if (parseCount(quantity) < 1) return;
-
     const memberQuantities = { ...(item.memberQuantities || {}) };
     memberQuantities[person] = quantity;
 
@@ -127,11 +121,6 @@ function OrdersStep({
         ? item.members
         : [...item.members, person],
     });
-  };
-
-  const changeMemberQuantity = (item, person, amount) => {
-    const currentQuantity = parseCount(item.memberQuantities?.[person]) || 1;
-    updateMemberQuantity(item, person, String(Math.max(1, currentQuantity + amount)));
   };
 
   const hasValidItem = items.some(
@@ -270,42 +259,46 @@ function OrdersStep({
                 </div>
                 <div className="member-buttons">
                   {people.map((person) => {
-                    const isSelected = isIndividualQuantityItem(item)
-                      ? item.members.includes(person)
-                      : item.members.includes(person);
+                    const isSelected = item.members.includes(person);
 
                     return (
                       <div
                         className={`member-quantity ${isSelected ? "selected" : ""}`}
                         key={person}
-                        >
-                          <button
-                            className={isSelected ? "selected" : ""}
-                            onClick={() => toggleMember(item.id, person)}
-                            type="button"
+                      >
+                        <button
+                          className={isSelected ? "selected" : ""}
+                          onClick={() => toggleMember(item.id, person)}
+                          type="button"
                         >
                           <span>{isSelected ? "✓" : "+"}</span>
                           {person}
-                          </button>
-                          {isIndividualQuantityItem(item) && isSelected ? (
-                            <div className="person-quantity-control">
-                              <input
-                              type="number"
-                              min="1"
-                              value={item.memberQuantities?.[person] || 1}
-                                onChange={(event) =>
-                                  updateMemberQuantity(
-                                    item,
-                                    person,
-                                    event.target.value,
-                                  )
+                        </button>
+                        {isIndividualQuantityItem(item) && isSelected ? (
+                          <div className="person-quantity-control">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={item.memberQuantities?.[person] ?? ""}
+                              onChange={(event) =>
+                                updateMemberQuantity(
+                                  item,
+                                  person,
+                                  event.target.value,
+                                )
+                              }
+                              onBlur={(event) => {
+                                if (!event.target.value) {
+                                  updateMemberQuantity(item, person, "1");
                                 }
-                                aria-label={`${person} 수량`}
-                              />
-                              <span className="quantity-unit">개</span>
-                            </div>
-                          ) : null}
-                        </div>
+                              }}
+                              aria-label={`${person} 수량`}
+                            />
+                            <span className="quantity-unit">개</span>
+                          </div>
+                        ) : null}
+                      </div>
                     );
                   })}
                 </div>
