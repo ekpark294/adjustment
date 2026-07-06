@@ -20,10 +20,16 @@ function ParticipantsStep({
   const removePerson = (person) => {
     setPeople(people.filter((item) => item !== person));
     setItems(
-      items.map((item) => ({
-        ...item,
-        members: item.members.filter((member) => member !== person),
-      })),
+      items.map((item) => {
+        const memberQuantities = { ...(item.memberQuantities || {}) };
+        delete memberQuantities[person];
+
+        return {
+          ...item,
+          members: item.members.filter((member) => member !== person),
+          memberQuantities,
+        };
+      }),
     );
   };
 

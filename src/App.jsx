@@ -12,6 +12,8 @@ const createInitialItem = () => ({
   price: "",
   quantity: 1,
   members: [],
+  quantityMode: "total",
+  memberQuantities: {},
 });
 
 function App() {

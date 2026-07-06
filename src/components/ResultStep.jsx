@@ -3,6 +3,10 @@ import { downloadSectionImage } from "../utils/imageDownload";
 import {
   calculateGrandTotal,
   calculateTotals,
+  getItemNote,
+  getItemParticipants,
+  getItemSplitAmount,
+  getItemTotalQuantity,
   money,
 } from "../utils/settlement";
 
@@ -99,14 +103,12 @@ function ResultStep({ people, items, onBack }) {
             <tbody>
               {items
                 .filter((item) => item.menu)
+                .slice()
                 .reverse()
                 .map((item, index) => {
-                  const share = item.members.length
-                    ? Math.round(
-                        (Number(item.price) * Number(item.quantity)) /
-                          item.members.length,
-                      )
-                    : 0;
+                  const share = Math.round(getItemSplitAmount(item));
+                  const participants = getItemParticipants(item);
+
                   return (
                     <tr key={item.id}>
                       <td className="menu-number">{index + 1}</td>
@@ -114,16 +116,12 @@ function ResultStep({ people, items, onBack }) {
                         <b>{item.menu}</b>
                       </td>
                       <td>₩{money.format(Number(item.price))}</td>
-                      <td>{item.quantity}</td>
-                      <td>{item.members.length}</td>
+                      <td>{getItemTotalQuantity(item)}</td>
+                      <td>{participants.length}</td>
                       <td>
-                        <strong>₩ {money.format(share)}</strong>
+                        <strong>₩{money.format(share)}</strong>
                       </td>
-                      <td>
-                        {item.members.length
-                          ? item.members.join(", ")
-                          : "선택된 사람 없음"}
-                      </td>
+                      <td>{getItemNote(item)}</td>
                     </tr>
                   );
                 })}
@@ -168,7 +166,7 @@ function ResultStep({ people, items, onBack }) {
       </button>
       <div className="actions">
         <button className="back" onClick={onBack}>
-          ← 수정하기
+          다시 수정하기
         </button>
         <div className="result-buttons">
           <button
