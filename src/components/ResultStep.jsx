@@ -138,10 +138,10 @@ function ResultStep({ people, items, onBack }) {
                         </strong>
                       </td>
                       <td>
-                        {noteParts.length
-                          ? noteParts.map(({ person, quantity }, noteIndex) => (
-                              <span key={person}>
-                                {noteIndex > 0 ? ", " : ""}
+                        {noteParts.length ? (
+                          <span className="note-list">
+                            {noteParts.map(({ person, quantity }) => (
+                              <span className="note-person-entry" key={person}>
                                 <span
                                   className={
                                     selectedPerson === person
@@ -153,8 +153,11 @@ function ResultStep({ people, items, onBack }) {
                                 </span>
                                 {isIndividual ? ` ${quantity}개` : ""}
                               </span>
-                            ))
-                          : "선택된 사람 없음"}
+                            ))}
+                          </span>
+                        ) : (
+                          "선택된 사람 없음"
+                        )}
                       </td>
                     </tr>
                   );
