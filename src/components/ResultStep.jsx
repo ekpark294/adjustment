@@ -133,7 +133,7 @@ function ResultStep({ people, items, onBack }) {
                       <td>
                         <strong>
                           {isIndividual
-                            ? `[개당 ${money.format(Number(item.price || 0))}원]`
+                            ? `개당 ₩${money.format(Number(item.price || 0))}`
                             : `₩${money.format(share)}`}
                         </strong>
                       </td>
