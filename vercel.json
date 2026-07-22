@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/guide", "destination": "/" },
-    { "source": "/privacy", "destination": "/" }
+    { "source": "/privacy", "destination": "/" },
+    { "source": "/faq", "destination": "/" },
+    { "source": "/examples", "destination": "/" }
   ]
 }

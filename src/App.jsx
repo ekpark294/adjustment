@@ -20,7 +20,14 @@ const createInitialItem = () => ({
 function App() {
   const [page, setPage] = useState(() => {
     const path = window.location.pathname.replace(/^\/+/, "");
-    return path === "guide" || path === "privacy" ? path : "app";
+    return (
+      path === "guide" ||
+      path === "privacy" ||
+      path === "faq" ||
+      path === "examples"
+    )
+      ? path
+      : "app";
   });
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
@@ -48,7 +55,14 @@ function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.replace(/^\/+/, "");
-      setPage(path === "guide" || path === "privacy" ? path : "app");
+      setPage(
+        path === "guide" ||
+          path === "privacy" ||
+          path === "faq" ||
+          path === "examples"
+          ? path
+          : "app",
+      );
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -61,6 +75,10 @@ function App() {
         ? "개인정보처리방침 | 한입정산"
         : page === "guide"
           ? "사용 안내 | 한입정산"
+          : page === "faq"
+            ? "자주 묻는 질문 | 한입정산"
+            : page === "examples"
+              ? "정산 예시 | 한입정산"
           : "한입정산 | 모임 정산·더치페이 계산기";
   }, [page]);
 
@@ -70,6 +88,10 @@ function App() {
       {page === "guide" && <SitePage type="guide" onHome={() => navigate("app")} />}
       {page === "privacy" && (
         <SitePage type="privacy" onHome={() => navigate("app")} />
+      )}
+      {page === "faq" && <SitePage type="faq" onHome={() => navigate("app")} />}
+      {page === "examples" && (
+        <SitePage type="examples" onHome={() => navigate("app")} />
       )}
       {page === "app" && step === 1 && (
         <ParticipantsStep

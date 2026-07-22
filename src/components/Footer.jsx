@@ -11,6 +11,12 @@ function Footer({ onNavigate }) {
         <a href="/guide" onClick={(event) => move(event, "guide")}>
           사용 안내
         </a>
+        <a href="/faq" onClick={(event) => move(event, "faq")}>
+          자주 묻는 질문
+        </a>
+        <a href="/examples" onClick={(event) => move(event, "examples")}>
+          정산 예시
+        </a>
         <a href="/privacy" onClick={(event) => move(event, "privacy")}>
           개인정보처리방침
         </a>
