@@ -31,6 +31,15 @@ function OrdersStep({
 
   const normalizeCountInput = (value) => value.replace(/\D/g, "");
 
+  const normalizeDecimalCountInput = (value) => {
+    const sanitized = value.replace(/[^0-9.]/g, "");
+    const [whole, ...decimalParts] = sanitized.split(".");
+
+    if (!decimalParts.length) return whole;
+
+    return `${whole || "0"}.${decimalParts.join("")}`;
+  };
+
   const normalizeQuantityOnBlur = (id, value) => {
     if (!parseCount(value)) updateItem(id, { quantity: 1 });
   };
@@ -111,7 +120,7 @@ function OrdersStep({
   };
 
   const updateMemberQuantity = (item, person, value) => {
-    const quantity = normalizeCountInput(value);
+    const quantity = normalizeDecimalCountInput(value);
     const memberQuantities = { ...(item.memberQuantities || {}) };
     memberQuantities[person] = quantity;
 
@@ -278,8 +287,8 @@ function OrdersStep({
                           <div className="person-quantity-control">
                             <input
                               type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
+                              inputMode="decimal"
+                              pattern="[0-9]*[.]?[0-9]*"
                               value={item.memberQuantities?.[person] ?? ""}
                               onChange={(event) =>
                                 updateMemberQuantity(
@@ -289,7 +298,7 @@ function OrdersStep({
                                 )
                               }
                               onBlur={(event) => {
-                                if (!event.target.value) {
+                                if (!parseCount(event.target.value)) {
                                   updateMemberQuantity(item, person, "1");
                                 }
                               }}

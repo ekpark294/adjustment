@@ -8,16 +8,43 @@ export const parseCount = (value) => {
 export const isIndividualQuantityItem = (item) =>
   item.quantityMode === "individual";
 
-export const getItemParticipantQuantities = (item) => {
+const sortByParticipantOrder = (entries, participantOrder = []) => {
+  if (!participantOrder.length) return entries;
+
+  const orderMap = new Map(
+    participantOrder.map((person, index) => [person, index]),
+  );
+
+  return entries.slice().sort(([personA], [personB]) => {
+    const indexA = orderMap.has(personA)
+      ? orderMap.get(personA)
+      : Number.MAX_SAFE_INTEGER;
+    const indexB = orderMap.has(personB)
+      ? orderMap.get(personB)
+      : Number.MAX_SAFE_INTEGER;
+
+    return indexA - indexB;
+  });
+};
+
+export const getItemParticipantQuantities = (item, participantOrder = []) => {
   if (!isIndividualQuantityItem(item)) {
-    return Object.fromEntries((item.members || []).map((person) => [person, 1]));
+    return Object.fromEntries(
+      sortByParticipantOrder(
+        (item.members || []).map((person) => [person, 1]),
+        participantOrder,
+      ),
+    );
   }
 
   return Object.fromEntries(
-    (item.members || []).map((person) => [
-      person,
-      parseCount(item.memberQuantities?.[person]) || 1,
-    ]),
+    sortByParticipantOrder(
+      (item.members || []).map((person) => [
+        person,
+        parseCount(item.memberQuantities?.[person]) || 1,
+      ]),
+      participantOrder,
+    ),
   );
 };
 
@@ -30,18 +57,31 @@ export const getItemTotalQuantity = (item) => {
   );
 };
 
-export const getItemParticipants = (item) =>
-  Object.keys(getItemParticipantQuantities(item));
+export const getItemParticipants = (item, participantOrder = []) =>
+  Object.keys(getItemParticipantQuantities(item, participantOrder));
 
-export const getItemNote = (item) => {
-  const participantQuantities = getItemParticipantQuantities(item);
-  const people = Object.keys(participantQuantities);
+export const getItemNoteParts = (item, participantOrder = []) => {
+  const participantQuantities = getItemParticipantQuantities(
+    item,
+    participantOrder,
+  );
 
-  if (!people.length) return "선택된 사람 없음";
-  if (!isIndividualQuantityItem(item)) return people.join(", ");
+  return Object.entries(participantQuantities).map(([person, quantity]) => ({
+    person,
+    quantity,
+  }));
+};
 
-  return people
-    .map((person) => `${person} ${parseCount(participantQuantities[person])}개`)
+export const getItemNote = (item, participantOrder = []) => {
+  const noteParts = getItemNoteParts(item, participantOrder);
+
+  if (!noteParts.length) return "선택된 사람 없음";
+  if (!isIndividualQuantityItem(item)) {
+    return noteParts.map(({ person }) => person).join(", ");
+  }
+
+  return noteParts
+    .map(({ person, quantity }) => `${person} ${parseCount(quantity)}개`)
     .join(", ");
 };
 

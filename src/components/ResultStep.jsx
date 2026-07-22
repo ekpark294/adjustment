@@ -3,10 +3,11 @@ import { downloadSectionImage } from "../utils/imageDownload";
 import {
   calculateGrandTotal,
   calculateTotals,
-  getItemNote,
+  getItemNoteParts,
   getItemParticipants,
   getItemSplitAmount,
   getItemTotalQuantity,
+  isIndividualQuantityItem,
   money,
 } from "../utils/settlement";
 
@@ -21,6 +22,7 @@ function ResultStep({ people, items, onBack }) {
     section: "",
     percent: 0,
   });
+  const [selectedPerson, setSelectedPerson] = useState("");
   const totals = useMemo(() => calculateTotals(people, items), [people, items]);
   const grandTotal = useMemo(() => calculateGrandTotal(items), [items]);
 
@@ -107,21 +109,53 @@ function ResultStep({ people, items, onBack }) {
                 .reverse()
                 .map((item, index) => {
                   const share = Math.round(getItemSplitAmount(item));
-                  const participants = getItemParticipants(item);
+                  const participants = getItemParticipants(item, people);
+                  const noteParts = getItemNoteParts(item, people);
+                  const isIndividual = isIndividualQuantityItem(item);
+                  const isHighlighted =
+                    selectedPerson && participants.includes(selectedPerson);
+                  const displayPrice =
+                    Number(item.price || 0) *
+                    (isIndividual ? getItemTotalQuantity(item) : 1);
 
                   return (
-                    <tr key={item.id}>
+                    <tr
+                      className={isHighlighted ? "person-menu-highlight" : ""}
+                      key={item.id}
+                    >
                       <td className="menu-number">{index + 1}</td>
                       <td>
                         <b>{item.menu}</b>
                       </td>
-                      <td>₩{money.format(Number(item.price))}</td>
+                      <td>₩{money.format(displayPrice)}</td>
                       <td>{getItemTotalQuantity(item)}</td>
                       <td>{participants.length}</td>
                       <td>
-                        <strong>₩{money.format(share)}</strong>
+                        <strong>
+                          {isIndividual
+                            ? `[개당 ${money.format(Number(item.price || 0))}원]`
+                            : `₩${money.format(share)}`}
+                        </strong>
                       </td>
-                      <td>{getItemNote(item)}</td>
+                      <td>
+                        {noteParts.length
+                          ? noteParts.map(({ person, quantity }, noteIndex) => (
+                              <span key={person}>
+                                {noteIndex > 0 ? ", " : ""}
+                                <span
+                                  className={
+                                    selectedPerson === person
+                                      ? "selected-note-person"
+                                      : ""
+                                  }
+                                >
+                                  {person}
+                                </span>
+                                {isIndividual ? ` ${quantity}개` : ""}
+                              </span>
+                            ))
+                          : "선택된 사람 없음"}
+                      </td>
                     </tr>
                   );
                 })}
@@ -147,11 +181,23 @@ function ResultStep({ people, items, onBack }) {
         </div>
         <div className="card result-card" ref={peopleCardRef}>
           {people.map((person, index) => (
-            <div className="result-row" key={person}>
+            <button
+              className={`result-row ${
+                selectedPerson === person ? "selected" : ""
+              }`}
+              key={person}
+              onClick={() =>
+                setSelectedPerson((current) =>
+                  current === person ? "" : person,
+                )
+              }
+              type="button"
+              aria-pressed={selectedPerson === person}
+            >
               <span className="avatar">{index + 1}</span>
               <b>{person}</b>
               <strong>{money.format(Math.round(totals[person]))}원</strong>
-            </div>
+            </button>
           ))}
         </div>
       </div>
