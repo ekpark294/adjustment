@@ -140,7 +140,7 @@ function ResultStep({ people, items, onBack }) {
                       <td>
                         {noteParts.length ? (
                           <span className="note-list">
-                            {noteParts.map(({ person, quantity }) => (
+                            {noteParts.map(({ person, quantity }, noteIndex) => (
                               <span className="note-person-entry" key={person}>
                                 <span
                                   className={
@@ -152,6 +152,7 @@ function ResultStep({ people, items, onBack }) {
                                   {person}
                                 </span>
                                 {isIndividual ? ` ${quantity}개` : ""}
+                                {noteIndex < noteParts.length - 1 ? "," : ""}
                               </span>
                             ))}
                           </span>
