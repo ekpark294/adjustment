@@ -1,3 +1,5 @@
+import InfoContent from "./InfoContent";
+
 function ParticipantsStep({
   name,
   setName,
@@ -126,6 +128,7 @@ function ParticipantsStep({
           </div>
         </section>
       )}
+      <InfoContent />
     </section>
   );
 }

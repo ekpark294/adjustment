@@ -84,6 +84,15 @@
 - 인원별 정산 금액을 클릭하면 해당 인원이 포함된 메뉴 행을 강조하고 비고의 해당 이름을 굵게 표시
 - 인원별 결과를 텍스트로 클립보드에 복사
 
+### 사이트 정보 및 광고 심사 보강
+
+- 첫 화면 하단에 사용 안내, 계산 방식, 개별 수량 설명 콘텐츠 추가
+- 푸터에 사용 안내, 개인정보처리방침, 문의 링크 추가
+- Google 광고 사용 시 필요한 쿠키 및 제3자 광고 기술 고지를 포함한 정적 개인정보처리방침 페이지 추가
+- React 화면으로 접근 가능한 `/guide`, `/privacy` 페이지 추가
+- Vercel rewrite 설정으로 `/guide`, `/privacy` 직접 접근 시 React 앱으로 연결
+- `sitemap.xml`에 사용 안내와 개인정보처리방침 URL 등록
+
 메뉴별 표 항목:
 
 ```text
@@ -173,6 +182,7 @@ npx vercel@37.14.0 --prod
 
 - `src/App.jsx`: 화면 단계와 공통 상태 연결
 - `src/components/`: 헤더, 푸터, 참여자·주문·결과 단계 화면
+- `src/components/InfoContent.jsx`: 첫 화면 하단 안내 콘텐츠
 - `src/hooks/useDrafts.js`: 로컬 임시 저장 관리
 - `src/utils/settlement.js`: 정산 금액 계산과 금액 표시
 - `src/utils/imageDownload.js`: PNG 이미지 생성 및 다운로드

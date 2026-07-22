@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
 import OrdersStep from "./components/OrdersStep";
 import ParticipantsStep from "./components/ParticipantsStep";
+import SitePage from "./components/SitePage";
 import ResultStep from "./components/ResultStep";
 import { useDrafts } from "./hooks/useDrafts";
 
@@ -17,6 +18,10 @@ const createInitialItem = () => ({
 });
 
 function App() {
+  const [page, setPage] = useState(() => {
+    const path = window.location.pathname.replace(/^\/+/, "");
+    return path === "guide" || path === "privacy" ? path : "app";
+  });
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [people, setPeople] = useState([]);
@@ -32,10 +37,41 @@ function App() {
     setStep(2);
   };
 
+  const navigate = (nextPage) => {
+    const path = nextPage === "app" ? "/" : `/${nextPage}`;
+    window.history.pushState({}, "", path);
+    setPage(nextPage);
+    if (nextPage === "app") setStep(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.replace(/^\/+/, "");
+      setPage(path === "guide" || path === "privacy" ? path : "app");
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    document.title =
+      page === "privacy"
+        ? "개인정보처리방침 | 한입정산"
+        : page === "guide"
+          ? "사용 안내 | 한입정산"
+          : "한입정산 | 모임 정산·더치페이 계산기";
+  }, [page]);
+
   return (
     <main className="shell">
-      <Header step={step} onHome={() => setStep(1)} />
-      {step === 1 && (
+      <Header step={page === "app" ? step : 0} onHome={() => navigate("app")} />
+      {page === "guide" && <SitePage type="guide" onHome={() => navigate("app")} />}
+      {page === "privacy" && (
+        <SitePage type="privacy" onHome={() => navigate("app")} />
+      )}
+      {page === "app" && step === 1 && (
         <ParticipantsStep
           name={name}
           setName={setName}
@@ -49,7 +85,7 @@ function App() {
           onNext={() => setStep(2)}
         />
       )}
-      {step === 2 && (
+      {page === "app" && step === 2 && (
         <OrdersStep
           people={people}
           items={items}
@@ -60,10 +96,10 @@ function App() {
           onResult={() => setStep(3)}
         />
       )}
-      {step === 3 && (
+      {page === "app" && step === 3 && (
         <ResultStep people={people} items={items} onBack={() => setStep(2)} />
       )}
-      <Footer />
+      <Footer onNavigate={navigate} />
     </main>
   );
 }
