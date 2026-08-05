@@ -3,6 +3,7 @@
     { "source": "/guide", "destination": "/" },
     { "source": "/privacy", "destination": "/" },
     { "source": "/faq", "destination": "/" },
-    { "source": "/examples", "destination": "/" }
+    { "source": "/examples", "destination": "/" },
+    { "source": "/s/:id", "destination": "/api/s?id=:id" }
   ]
 }

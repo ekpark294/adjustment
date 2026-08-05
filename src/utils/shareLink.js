@@ -170,17 +170,52 @@ export const readShareToken = () => {
   return hash.startsWith(`${SHARE_KEY}=`) ? hash.slice(SHARE_KEY.length + 1) : "";
 };
 
-export const buildShareUrl = async (people, items, roundsEnabled) =>
-  `${window.location.origin}/#${SHARE_KEY}=${await encodeSettlement(
-    people,
-    items,
-    roundsEnabled,
-  )}`;
+const hashUrl = (token) =>
+  `${window.location.origin}/#${SHARE_KEY}=${token}`;
 
+/**
+ * 짧은 링크를 우선 시도한다.
+ * 저장소가 없거나 요청이 실패하면 내역을 그대로 담은 해시 링크로 되돌아간다.
+ * 링크는 길어지지만 공유 기능이 멈추지는 않는다.
+ */
+export const buildShareUrl = async (people, items, roundsEnabled) => {
+  const token = await encodeSettlement(people, items, roundsEnabled);
+
+  try {
+    const response = await fetch("/api/share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data: token }),
+    });
+    if (!response.ok) return hashUrl(token);
+
+    const { id } = await response.json();
+    return id ? `${window.location.origin}/s/${id}` : hashUrl(token);
+  } catch (error) {
+    console.error("짧은 공유 링크를 만들지 못했습니다.", error);
+    return hashUrl(token);
+  }
+};
+
+/** 주소가 `/s/{id}` 형태면 그 id를 돌려준다. */
+export const readShareId = () => {
+  const match = window.location.pathname.match(/^\/s\/([0-9a-zA-Z]{4,32})$/);
+  return match ? match[1] : "";
+};
+
+/** 보관 기간이 지난 링크임을 알리는 표시. 단순 실패와 구분해 안내 문구를 다르게 보여준다. */
+export const EXPIRED = "expired";
+
+export const fetchSharedSettlement = async (id) => {
+  const response = await fetch(`/api/settlement?id=${encodeURIComponent(id)}`);
+  if (response.status === 404 || response.status === 410) return EXPIRED;
+  if (!response.ok) return null;
+
+  const { data } = await response.json();
+  return decodeSettlement(data);
+};
+
+/** 공유 화면을 벗어날 때 주소를 앱 첫 화면으로 되돌린다. */
 export const clearShareHash = () => {
-  window.history.replaceState(
-    {},
-    "",
-    `${window.location.pathname}${window.location.search}`,
-  );
+  window.history.replaceState({}, "", "/");
 };

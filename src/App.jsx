@@ -10,6 +10,9 @@ import { getItemRound } from "./utils/settlement";
 import {
   clearShareHash,
   decodeSettlement,
+  EXPIRED,
+  fetchSharedSettlement,
+  readShareId,
   readShareToken,
 } from "./utils/shareLink";
 
@@ -46,7 +49,7 @@ function App() {
   // 공유 링크로 들어온 경우의 정산 내역. 내 정산과 섞이지 않도록 따로 둔다.
   // 압축 해제가 비동기라, 해석이 끝날 때까지 "loading"으로 두어 첫 화면이 잠깐 스쳐 보이지 않게 한다.
   const [shared, setShared] = useState(() =>
-    readShareToken() ? "loading" : null,
+    readShareToken() || readShareId() ? "loading" : null,
   );
 
   /** 공유받은 내역을 내 정산으로 가져와 이어서 수정한다. */
@@ -90,13 +93,20 @@ function App() {
 
   useEffect(() => {
     const token = readShareToken();
-    if (!token) return undefined;
+    const id = readShareId();
+    if (!token && !id) return undefined;
 
     let cancelled = false;
     // 해석에 실패하면 null이 되어 평소의 첫 화면을 보여준다.
-    decodeSettlement(token).then((result) => {
-      if (!cancelled) setShared(result);
-    });
+    const load = id ? fetchSharedSettlement(id) : decodeSettlement(token);
+    load
+      .catch((error) => {
+        console.error("공유받은 내역을 불러오지 못했습니다.", error);
+        return null;
+      })
+      .then((result) => {
+        if (!cancelled) setShared(result);
+      });
 
     return () => {
       cancelled = true;
@@ -134,7 +144,12 @@ function App() {
   }, [page]);
 
   const isSharedLoading = page === "app" && shared === "loading";
-  const isSharedView = page === "app" && Boolean(shared) && shared !== "loading";
+  const isSharedExpired = page === "app" && shared === EXPIRED;
+  const isSharedView =
+    page === "app" &&
+    Boolean(shared) &&
+    shared !== "loading" &&
+    shared !== EXPIRED;
   const isApp = page === "app" && !shared;
 
   return (
@@ -146,6 +161,22 @@ function App() {
       {isSharedLoading && (
         <section className="page share-loading">
           <p>공유받은 정산 내역을 불러오고 있어요.</p>
+        </section>
+      )}
+      {isSharedExpired && (
+        <section className="page share-expired">
+          <p className="eyebrow">SHARED</p>
+          <h1>
+            링크가 <em>만료됐어요.</em>
+          </h1>
+          <p className="lead">
+            공유 링크는 만든 지 14일이 지나면 자동으로 사라져요.
+            <br />
+            정산한 사람에게 링크를 다시 받아주세요.
+          </p>
+          <button className="primary" onClick={leaveShared}>
+            새로 정산하기 <span>→</span>
+          </button>
         </section>
       )}
       {isSharedView && (
