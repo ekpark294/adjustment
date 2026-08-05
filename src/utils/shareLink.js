@@ -6,11 +6,17 @@ const SHARE_VERSION = 1;
 /**
  * 정산 내역을 URL 해시에 담아 공유한다.
  * 해시는 서버로 전송되지 않으므로 참여자 이름이 서버 기록에 남지 않는다.
- * 링크 길이를 줄이려고 키를 한 글자로 쓰고, 참여자는 이름 대신 순번으로 저장한다.
+ * 링크 길이를 줄이려고 키를 한 글자로 쓰고, 참여자는 이름 대신 순번으로 저장한 뒤 압축한다.
  */
 
-const toBase64Url = (text) => {
-  const bytes = new TextEncoder().encode(text);
+/**
+ * 압축한 링크임을 알리는 표시.
+ * 압축하지 않은 링크는 `{`로 시작하는 JSON을 인코딩한 값이라 항상 `e`로 시작하므로,
+ * 다른 글자를 앞에 붙이면 두 형식을 확실히 구분할 수 있다.
+ */
+const COMPRESSED_PREFIX = "z";
+
+const bytesToBase64Url = (bytes) => {
   let binary = "";
   bytes.forEach((byte) => {
     binary += String.fromCharCode(byte);
@@ -22,14 +28,36 @@ const toBase64Url = (text) => {
     .replace(/=+$/, "");
 };
 
-const fromBase64Url = (token) => {
+const base64UrlToBytes = (token) => {
   const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
-  const bytes = Uint8Array.from(atob(padded), (character) =>
-    character.charCodeAt(0),
-  );
 
-  return new TextDecoder().decode(bytes);
+  return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+};
+
+const toBase64Url = (text) => bytesToBase64Url(new TextEncoder().encode(text));
+
+const fromBase64Url = (token) =>
+  new TextDecoder().decode(base64UrlToBytes(token));
+
+const canCompress = () =>
+  typeof CompressionStream === "function" &&
+  typeof DecompressionStream === "function";
+
+const compress = async (text) => {
+  const stream = new Blob([text])
+    .stream()
+    .pipeThrough(new CompressionStream("deflate"));
+
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+};
+
+const decompress = async (bytes) => {
+  const stream = new Blob([bytes])
+    .stream()
+    .pipeThrough(new DecompressionStream("deflate"));
+
+  return new Response(stream).text();
 };
 
 /**
@@ -38,7 +66,7 @@ const fromBase64Url = (token) => {
  */
 const isShareableItem = (item) => Boolean(item.menu) || Number(item.price) > 0;
 
-export const encodeSettlement = (people, items, roundsEnabled) => {
+export const encodeSettlement = async (people, items, roundsEnabled) => {
   const orderOf = new Map(people.map((person, index) => [person, index]));
 
   const encodedItems = items
@@ -67,21 +95,35 @@ export const encodeSettlement = (people, items, roundsEnabled) => {
       return entry;
     });
 
-  return toBase64Url(
-    JSON.stringify({
-      v: SHARE_VERSION,
-      r: roundsEnabled ? 1 : 0,
-      p: people,
-      i: encodedItems,
-    }),
-  );
+  const json = JSON.stringify({
+    v: SHARE_VERSION,
+    r: roundsEnabled ? 1 : 0,
+    p: people,
+    i: encodedItems,
+  });
+
+  // 압축을 지원하지 않는 브라우저에서는 압축 없이 만든다. 링크는 길지만 그대로 동작한다.
+  if (!canCompress()) return toBase64Url(json);
+
+  try {
+    return COMPRESSED_PREFIX + bytesToBase64Url(await compress(json));
+  } catch (error) {
+    console.error("공유 링크를 압축하지 못했습니다.", error);
+    return toBase64Url(json);
+  }
 };
 
-export const decodeSettlement = (token) => {
+const readPayload = async (token) => {
+  if (!token.startsWith(COMPRESSED_PREFIX)) return fromBase64Url(token);
+
+  return decompress(base64UrlToBytes(token.slice(COMPRESSED_PREFIX.length)));
+};
+
+export const decodeSettlement = async (token) => {
   if (!token) return null;
 
   try {
-    const payload = JSON.parse(fromBase64Url(token));
+    const payload = JSON.parse(await readPayload(token));
     if (!payload || payload.v !== SHARE_VERSION) return null;
 
     const people = (Array.isArray(payload.p) ? payload.p : []).filter(
@@ -128,8 +170,8 @@ export const readShareToken = () => {
   return hash.startsWith(`${SHARE_KEY}=`) ? hash.slice(SHARE_KEY.length + 1) : "";
 };
 
-export const buildShareUrl = (people, items, roundsEnabled) =>
-  `${window.location.origin}/#${SHARE_KEY}=${encodeSettlement(
+export const buildShareUrl = async (people, items, roundsEnabled) =>
+  `${window.location.origin}/#${SHARE_KEY}=${await encodeSettlement(
     people,
     items,
     roundsEnabled,

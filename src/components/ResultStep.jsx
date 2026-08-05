@@ -35,6 +35,7 @@ function ResultStep({
   });
   const [selectedPerson, setSelectedPerson] = useState("");
   const [shareCopied, setShareCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const totals = useMemo(() => calculateTotals(people, items), [people, items]);
   const grandTotal = useMemo(() => calculateGrandTotal(items), [items]);
   const filledItems = useMemo(
@@ -72,6 +73,19 @@ function ResultStep({
       };
     });
   }, [filledItems, people, roundsEnabled]);
+
+  useEffect(() => {
+    if (sharedView) return undefined;
+
+    let cancelled = false;
+    buildShareUrl(people, items, roundsEnabled).then((url) => {
+      if (!cancelled) setShareUrl(url);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [people, items, roundsEnabled, sharedView]);
 
   const saveImage = async (ref, fileName, section, backgroundColor) => {
     if (!ref.current || imageProgress.section) return;
@@ -125,9 +139,15 @@ function ResultStep({
     return [...lines, ...roundLines].join("\n");
   };
 
-  /** 모바일에서는 기본 공유 시트를, 그 외에는 클립보드 복사를 쓴다. */
+  /**
+   * 모바일에서는 기본 공유 시트를, 그 외에는 클립보드 복사를 쓴다.
+   * 링크는 미리 만들어 둔다. iOS Safari는 사용자 조작 직후에만 공유 시트를 열어주므로,
+   * 버튼을 누른 뒤 압축이 끝나기를 기다리면 공유가 차단될 수 있다.
+   */
   const shareResult = async () => {
-    const url = buildShareUrl(people, items, roundsEnabled);
+    if (!shareUrl) return;
+
+    const url = shareUrl;
     const canNativeShare =
       Boolean(navigator.share) &&
       window.matchMedia("(pointer: coarse)").matches;

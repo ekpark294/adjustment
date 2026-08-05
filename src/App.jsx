@@ -44,8 +44,9 @@ function App() {
   // 마지막으로 다룬 차수. 새 메뉴가 이 값을 이어받는다.
   const [activeRound, setActiveRound] = useState(1);
   // 공유 링크로 들어온 경우의 정산 내역. 내 정산과 섞이지 않도록 따로 둔다.
+  // 압축 해제가 비동기라, 해석이 끝날 때까지 "loading"으로 두어 첫 화면이 잠깐 스쳐 보이지 않게 한다.
   const [shared, setShared] = useState(() =>
-    decodeSettlement(readShareToken()),
+    readShareToken() ? "loading" : null,
   );
 
   /** 공유받은 내역을 내 정산으로 가져와 이어서 수정한다. */
@@ -88,6 +89,21 @@ function App() {
   };
 
   useEffect(() => {
+    const token = readShareToken();
+    if (!token) return undefined;
+
+    let cancelled = false;
+    // 해석에 실패하면 null이 되어 평소의 첫 화면을 보여준다.
+    decodeSettlement(token).then((result) => {
+      if (!cancelled) setShared(result);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.replace(/^\/+/, "");
       setPage(
@@ -117,7 +133,8 @@ function App() {
           : "한입정산 | 모임 정산·더치페이 계산기";
   }, [page]);
 
-  const isSharedView = page === "app" && Boolean(shared);
+  const isSharedLoading = page === "app" && shared === "loading";
+  const isSharedView = page === "app" && Boolean(shared) && shared !== "loading";
   const isApp = page === "app" && !shared;
 
   return (
@@ -126,6 +143,11 @@ function App() {
         step={isApp ? step : isSharedView ? 3 : 0}
         onHome={() => navigate("app")}
       />
+      {isSharedLoading && (
+        <section className="page share-loading">
+          <p>공유받은 정산 내역을 불러오고 있어요.</p>
+        </section>
+      )}
       {isSharedView && (
         <ResultStep
           people={shared.people}
