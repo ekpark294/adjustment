@@ -24,6 +24,8 @@ function OrdersStep({
   setItems,
   roundsEnabled,
   setRoundsEnabled,
+  activeRound,
+  setActiveRound,
   draftSaved,
   onSaveDraft,
   onBack,
@@ -139,8 +141,30 @@ function OrdersStep({
 
   const roundOptions = getRoundOptions(items);
 
-  /** 목록 맨 앞이 가장 최근에 추가한 메뉴라, 그 차수를 그대로 이어받는다. */
-  const addItem = () => setItems([createItem(getItemRound(items[0])), ...items]);
+  /** 새 메뉴는 직전에 다루던 차수를 그대로 이어받는다. */
+  const addItem = () => setItems([createItem(activeRound), ...items]);
+
+  const selectRound = (item, round) => {
+    setActiveRound(round);
+    updateItem(item.id, { round });
+  };
+
+  const isRoundSorted = items.every(
+    (item, index) =>
+      index === 0 || getItemRound(items[index - 1]) >= getItemRound(item),
+  );
+
+  /** 1차를 맨 아래에 두고 높은 차수를 위로 올린다. 같은 차수끼리는 기존 순서를 유지한다. */
+  const sortByRound = () =>
+    setItems(
+      items
+        .map((item, index) => ({ item, index }))
+        .sort(
+          (a, b) =>
+            getItemRound(b.item) - getItemRound(a.item) || a.index - b.index,
+        )
+        .map(({ item }) => item),
+    );
 
   const hasValidItem = items.some(
     (item) =>
@@ -172,6 +196,23 @@ function OrdersStep({
           </button>
         </div>
       </div>
+      {roundsEnabled && items.length > 1 && (
+        <div className="orders-round-bar">
+          <span>
+            {isRoundSorted
+              ? "1차가 맨 아래로 정렬되어 있어요."
+              : "차수가 섞여 있어요."}
+          </span>
+          <button
+            className="round-sort"
+            onClick={sortByRound}
+            disabled={isRoundSorted}
+            type="button"
+          >
+            차수순 정렬
+          </button>
+        </div>
+      )}
       <div className="actions order-nav">
         <button className="back" onClick={onBack}>
           이전
@@ -210,7 +251,7 @@ function OrdersStep({
                           getItemRound(item) === round ? "selected" : ""
                         }
                         key={round}
-                        onClick={() => updateItem(item.id, { round })}
+                        onClick={() => selectRound(item, round)}
                         type="button"
                         aria-pressed={getItemRound(item) === round}
                       >

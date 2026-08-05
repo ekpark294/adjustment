@@ -25,6 +25,7 @@ function ParticipantsStep({
   const listRef = useRef(null);
   const dragRef = useRef(null);
   const [drag, setDrag] = useState(null);
+  const [editing, setEditing] = useState(null);
 
   const addPerson = () => {
     const value = name.trim();
@@ -33,7 +34,59 @@ function ParticipantsStep({
     setName("");
   };
 
+  /** 이름은 메뉴별 선택의 키로 쓰이므로, 바꿀 때 주문 내역의 키도 함께 옮긴다. */
+  const renamePerson = (from, nextName) => {
+    const value = nextName.trim();
+    if (!value || people.includes(value)) return false;
+
+    setPeople(people.map((person) => (person === from ? value : person)));
+    setItems(
+      items.map((item) => ({
+        ...item,
+        members: item.members.map((member) =>
+          member === from ? value : member,
+        ),
+        memberQuantities: Object.fromEntries(
+          Object.entries(item.memberQuantities || {}).map(
+            ([person, quantity]) => [person === from ? value : person, quantity],
+          ),
+        ),
+      })),
+    );
+    return true;
+  };
+
+  const startEditing = (person) => setEditing({ person, value: person });
+
+  const commitEditing = () => {
+    if (!editing) return;
+    const value = editing.value.trim();
+
+    // 같은 이름으로 저장하거나 비우면 그냥 편집을 닫는다.
+    if (!value || value === editing.person) {
+      setEditing(null);
+      return;
+    }
+    if (!renamePerson(editing.person, value)) {
+      setEditing({ ...editing, duplicate: true });
+      return;
+    }
+    setEditing(null);
+  };
+
+  const handleEditKeyDown = (event) => {
+    if (event.key === "Escape") {
+      setEditing(null);
+      return;
+    }
+    if (event.key !== "Enter" || event.nativeEvent.isComposing || event.repeat)
+      return;
+    event.preventDefault();
+    commitEditing();
+  };
+
   const removePerson = (person) => {
+    if (editing?.person === person) setEditing(null);
     setPeople(people.filter((item) => item !== person));
     setItems(
       items.map((item) => {
@@ -67,7 +120,7 @@ function ParticipantsStep({
     if (event.target.closest("[data-drag-handle]")) return true;
     // 터치는 손잡이에서만 시작해야 목록 위 스크롤이 막히지 않는다.
     if (event.pointerType === "touch") return false;
-    return !event.target.closest("button");
+    return !event.target.closest("button, input");
   };
 
   const beginDrag = (event, index) => {
@@ -177,11 +230,14 @@ function ParticipantsStep({
           )}
           {people.map((person, index) => {
             const offset = rowOffset(index);
+            const isEditing = editing?.person === person;
 
             return (
               <div
                 className={`person ${
                   drag?.fromIndex === index ? "dragging" : ""
+                } ${isEditing ? "editing" : ""} ${
+                  isEditing && editing.duplicate ? "duplicate" : ""
                 }`}
                 data-person-row
                 key={person}
@@ -204,8 +260,34 @@ function ParticipantsStep({
                   ⠿
                 </button>
                 <span className="avatar">{index + 1}</span>
-                <b>{person}</b>
+                {isEditing ? (
+                  <input
+                    className="person-name-input"
+                    value={editing.value}
+                    onBlur={commitEditing}
+                    onChange={(event) =>
+                      setEditing({
+                        person,
+                        value: event.target.value,
+                        duplicate: false,
+                      })
+                    }
+                    onKeyDown={handleEditKeyDown}
+                    aria-label={`${person} 이름 수정`}
+                    autoFocus
+                  />
+                ) : (
+                  <button
+                    className="person-name"
+                    onClick={() => startEditing(person)}
+                    type="button"
+                    title="클릭하면 이름을 바꿀 수 있어요"
+                  >
+                    {person}
+                  </button>
+                )}
                 <button
+                  className="person-remove"
                   onClick={() => removePerson(person)}
                   aria-label={`${person} 삭제`}
                 >
@@ -215,10 +297,17 @@ function ParticipantsStep({
             );
           })}
         </div>
-        {people.length > 1 && (
-          <p className="people-hint">
-            왼쪽 손잡이를 드래그하면 순서를 바꿀 수 있어요.
+        {editing?.duplicate ? (
+          <p className="people-hint invalid">
+            이미 있는 이름이에요. 다른 이름을 입력해주세요.
           </p>
+        ) : (
+          people.length > 0 && (
+            <p className="people-hint">
+              이름을 누르면 수정할 수 있고, 왼쪽 손잡이를 드래그하면 순서를 바꿀
+              수 있어요.
+            </p>
+          )
         )}
       </div>
       <button className="primary" disabled={people.length < 2} onClick={onNext}>

@@ -174,10 +174,17 @@ function ResultStep({ people, items, roundsEnabled, onBack }) {
                 const displayPrice =
                   Number(item.price || 0) *
                   (isIndividual ? getItemTotalQuantity(item) : 1);
+                // 차수가 바뀌는 첫 행에 굵은 선을 올려 차수 구간을 나눈다.
+                const startsRound =
+                  roundsEnabled &&
+                  index > 0 &&
+                  getItemRound(orderedItems[index - 1]) !== getItemRound(item);
 
                 return (
                   <tr
-                    className={isHighlighted ? "person-menu-highlight" : ""}
+                    className={`${isHighlighted ? "person-menu-highlight" : ""} ${
+                      startsRound ? "round-group-start" : ""
+                    }`}
                     key={item.id}
                   >
                     <td className="menu-number">{index + 1}</td>

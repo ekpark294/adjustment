@@ -6,6 +6,7 @@ import ParticipantsStep from "./components/ParticipantsStep";
 import SitePage from "./components/SitePage";
 import ResultStep from "./components/ResultStep";
 import { useDrafts } from "./hooks/useDrafts";
+import { getItemRound } from "./utils/settlement";
 
 const createInitialItem = () => ({
   id: crypto.randomUUID(),
@@ -35,6 +36,8 @@ function App() {
   const [people, setPeople] = useState([]);
   const [items, setItems] = useState([createInitialItem()]);
   const [roundsEnabled, setRoundsEnabled] = useState(false);
+  // 마지막으로 다룬 차수. 새 메뉴가 이 값을 이어받는다.
+  const [activeRound, setActiveRound] = useState(1);
   const { drafts, draftSaved, saveDraft, deleteDraft, selectDraft } =
     useDrafts();
 
@@ -42,6 +45,7 @@ function App() {
     setPeople(draft.people);
     setItems(draft.items);
     setRoundsEnabled(Boolean(draft.roundsEnabled));
+    setActiveRound(getItemRound(draft.items[0]));
     selectDraft(draft.id);
     setName("");
     setStep(2);
@@ -117,6 +121,8 @@ function App() {
           setItems={setItems}
           roundsEnabled={roundsEnabled}
           setRoundsEnabled={setRoundsEnabled}
+          activeRound={activeRound}
+          setActiveRound={setActiveRound}
           draftSaved={draftSaved}
           onSaveDraft={() => saveDraft(people, items, roundsEnabled)}
           onBack={() => setStep(1)}
