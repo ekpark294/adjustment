@@ -29,6 +29,7 @@
 - `docs/26-000_mobile_launch_foundation.md`: 모바일 앱 전환 및 배포 준비
 - `docs/26-001_rounds_and_participant_reorder.md`: 차수 정산 및 참여자 목록 편집
 - `docs/26-002_settlement_share_link.md`: 정산 결과 공유 링크
+- `docs/26-003_short_share_link.md`: 짧은 공유 링크와 정산별 미리보기 카드
 
 ## 정산 계산 방식
 
