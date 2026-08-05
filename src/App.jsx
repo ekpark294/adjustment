@@ -15,6 +15,7 @@ const createInitialItem = () => ({
   members: [],
   quantityMode: "total",
   memberQuantities: {},
+  round: 1,
 });
 
 function App() {
@@ -33,12 +34,14 @@ function App() {
   const [name, setName] = useState("");
   const [people, setPeople] = useState([]);
   const [items, setItems] = useState([createInitialItem()]);
+  const [roundsEnabled, setRoundsEnabled] = useState(false);
   const { drafts, draftSaved, saveDraft, deleteDraft, selectDraft } =
     useDrafts();
 
   const loadDraft = (draft) => {
     setPeople(draft.people);
     setItems(draft.items);
+    setRoundsEnabled(Boolean(draft.roundsEnabled));
     selectDraft(draft.id);
     setName("");
     setStep(2);
@@ -112,14 +115,21 @@ function App() {
           people={people}
           items={items}
           setItems={setItems}
+          roundsEnabled={roundsEnabled}
+          setRoundsEnabled={setRoundsEnabled}
           draftSaved={draftSaved}
-          onSaveDraft={() => saveDraft(people, items)}
+          onSaveDraft={() => saveDraft(people, items, roundsEnabled)}
           onBack={() => setStep(1)}
           onResult={() => setStep(3)}
         />
       )}
       {page === "app" && step === 3 && (
-        <ResultStep people={people} items={items} onBack={() => setStep(2)} />
+        <ResultStep
+          people={people}
+          items={items}
+          roundsEnabled={roundsEnabled}
+          onBack={() => setStep(2)}
+        />
       )}
       <Footer onNavigate={navigate} />
     </main>

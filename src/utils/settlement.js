@@ -8,6 +8,24 @@ export const parseCount = (value) => {
 export const isIndividualQuantityItem = (item) =>
   item.quantityMode === "individual";
 
+export const getItemRound = (item) => {
+  const round = Number(item?.round);
+  return Number.isInteger(round) && round >= 1 ? round : 1;
+};
+
+export const getMaxSelectedRound = (items) =>
+  items.reduce((max, item) => Math.max(max, getItemRound(item)), 1);
+
+/** 1차·2차는 항상 노출하고, 마지막 차수가 선택되면 다음 차수를 하나 더 열어준다. */
+export const getRoundOptions = (items) =>
+  Array.from(
+    { length: Math.max(2, getMaxSelectedRound(items) + 1) },
+    (_, index) => index + 1,
+  );
+
+export const getUsedRounds = (items) =>
+  [...new Set(items.map((item) => getItemRound(item)))].sort((a, b) => a - b);
+
 const sortByParticipantOrder = (entries, participantOrder = []) => {
   if (!participantOrder.length) return entries;
 

@@ -1,11 +1,13 @@
 import {
   getItemParticipants,
+  getItemRound,
   getItemTotalQuantity,
+  getRoundOptions,
   isIndividualQuantityItem,
   parseCount,
 } from "../utils/settlement";
 
-const createItem = () => ({
+const createItem = (round = 1) => ({
   id: crypto.randomUUID(),
   menu: "",
   price: "",
@@ -13,12 +15,15 @@ const createItem = () => ({
   members: [],
   quantityMode: "total",
   memberQuantities: {},
+  round,
 });
 
 function OrdersStep({
   people,
   items,
   setItems,
+  roundsEnabled,
+  setRoundsEnabled,
   draftSaved,
   onSaveDraft,
   onBack,
@@ -132,6 +137,11 @@ function OrdersStep({
     });
   };
 
+  const roundOptions = getRoundOptions(items);
+
+  /** 목록 맨 앞이 가장 최근에 추가한 메뉴라, 그 차수를 그대로 이어받는다. */
+  const addItem = () => setItems([createItem(getItemRound(items[0])), ...items]);
+
   const hasValidItem = items.some(
     (item) =>
       item.menu &&
@@ -148,9 +158,19 @@ function OrdersStep({
       </h1>
       <div className="orders-toolbar">
         <p className="lead">메뉴와 금액을 적고, 함께 먹은 사람을 선택해주세요.</p>
-        <button className="top-add" onClick={() => setItems([createItem(), ...items])}>
-          + 메뉴 추가
-        </button>
+        <div className="orders-toolbar-buttons">
+          <button
+            className={`round-toggle ${roundsEnabled ? "selected" : ""}`}
+            onClick={() => setRoundsEnabled(!roundsEnabled)}
+            type="button"
+            aria-pressed={roundsEnabled}
+          >
+            {roundsEnabled ? "차수 취소" : "차수 적용"}
+          </button>
+          <button className="top-add" onClick={addItem}>
+            + 메뉴 추가
+          </button>
+        </div>
       </div>
       <div className="actions order-nav">
         <button className="back" onClick={onBack}>
@@ -180,6 +200,26 @@ function OrdersStep({
                   </button>
                 )}
               </div>
+              {roundsEnabled && (
+                <div className="round-select">
+                  <b>차수</b>
+                  <div className="round-buttons">
+                    {roundOptions.map((round) => (
+                      <button
+                        className={
+                          getItemRound(item) === round ? "selected" : ""
+                        }
+                        key={round}
+                        onClick={() => updateItem(item.id, { round })}
+                        type="button"
+                        aria-pressed={getItemRound(item) === round}
+                      >
+                        {round}차
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="fields">
                 <label>
                   메뉴 이름

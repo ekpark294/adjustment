@@ -5,8 +5,10 @@ import {
   calculateTotals,
   getItemNoteParts,
   getItemParticipants,
+  getItemRound,
   getItemSplitAmount,
   getItemTotalQuantity,
+  getUsedRounds,
   isIndividualQuantityItem,
   money,
 } from "../utils/settlement";
@@ -14,9 +16,10 @@ import {
 const wait = (milliseconds) =>
   new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
-function ResultStep({ people, items, onBack }) {
+function ResultStep({ people, items, roundsEnabled, onBack }) {
   const totalRef = useRef(null);
   const menuTableRef = useRef(null);
+  const roundCardRef = useRef(null);
   const peopleCardRef = useRef(null);
   const [imageProgress, setImageProgress] = useState({
     section: "",
@@ -25,6 +28,41 @@ function ResultStep({ people, items, onBack }) {
   const [selectedPerson, setSelectedPerson] = useState("");
   const totals = useMemo(() => calculateTotals(people, items), [people, items]);
   const grandTotal = useMemo(() => calculateGrandTotal(items), [items]);
+  const filledItems = useMemo(
+    () => items.filter((item) => item.menu),
+    [items],
+  );
+
+  /** 입력 순서(오래된 것부터)를 유지하되, 차수를 쓰면 차수별로 묶어서 보여준다. */
+  const orderedItems = useMemo(() => {
+    const list = filledItems.slice().reverse();
+    if (!roundsEnabled) return list;
+
+    return list
+      .map((item, index) => ({ item, index }))
+      .sort(
+        (a, b) =>
+          getItemRound(a.item) - getItemRound(b.item) || a.index - b.index,
+      )
+      .map(({ item }) => item);
+  }, [filledItems, roundsEnabled]);
+
+  const roundSummaries = useMemo(() => {
+    if (!roundsEnabled) return [];
+
+    return getUsedRounds(filledItems).map((round) => {
+      const roundItems = filledItems.filter(
+        (item) => getItemRound(item) === round,
+      );
+
+      return {
+        round,
+        count: roundItems.length,
+        total: calculateGrandTotal(roundItems),
+        totals: calculateTotals(people, roundItems),
+      };
+    });
+  }, [filledItems, people, roundsEnabled]);
 
   const saveImage = async (ref, fileName, section, backgroundColor) => {
     if (!ref.current || imageProgress.section) return;
@@ -54,6 +92,28 @@ function ResultStep({ people, items, onBack }) {
       window.clearInterval(timer);
       setImageProgress({ section: "", percent: 0 });
     }
+  };
+
+  const buildCopyText = () => {
+    const lines = Object.entries(totals).map(
+      ([person, total]) => `${person}: ${money.format(Math.round(total))}원`,
+    );
+
+    if (!roundSummaries.length) return lines.join("\n");
+
+    const roundLines = roundSummaries.flatMap(
+      ({ round, total, totals: roundTotals }) => [
+        `\n[${round}차] 총 ${money.format(total)}원`,
+        ...people
+          .filter((person) => Math.round(roundTotals[person]) > 0)
+          .map(
+            (person) =>
+              `- ${person}: ${money.format(Math.round(roundTotals[person]))}원`,
+          ),
+      ],
+    );
+
+    return [...lines, ...roundLines].join("\n");
   };
 
   const imageButtonText = (section, defaultText) =>
@@ -87,13 +147,14 @@ function ResultStep({ people, items, onBack }) {
             <p>ORDER DETAILS</p>
             <h2>메뉴별 분배 내역</h2>
           </div>
-          <span>{items.filter((item) => item.menu).length}개 메뉴</span>
+          <span>{filledItems.length}개 메뉴</span>
         </div>
         <div className="table-scroll card">
-          <table ref={menuTableRef}>
+          <table className={roundsEnabled ? "has-round" : ""} ref={menuTableRef}>
             <thead>
               <tr>
                 <th>번호</th>
+                {roundsEnabled && <th>차수</th>}
                 <th>메뉴</th>
                 <th>가격</th>
                 <th>수량</th>
@@ -103,66 +164,67 @@ function ResultStep({ people, items, onBack }) {
               </tr>
             </thead>
             <tbody>
-              {items
-                .filter((item) => item.menu)
-                .slice()
-                .reverse()
-                .map((item, index) => {
-                  const share = Math.round(getItemSplitAmount(item));
-                  const participants = getItemParticipants(item, people);
-                  const noteParts = getItemNoteParts(item, people);
-                  const isIndividual = isIndividualQuantityItem(item);
-                  const isHighlighted =
-                    selectedPerson && participants.includes(selectedPerson);
-                  const displayPrice =
-                    Number(item.price || 0) *
-                    (isIndividual ? getItemTotalQuantity(item) : 1);
+              {orderedItems.map((item, index) => {
+                const share = Math.round(getItemSplitAmount(item));
+                const participants = getItemParticipants(item, people);
+                const noteParts = getItemNoteParts(item, people);
+                const isIndividual = isIndividualQuantityItem(item);
+                const isHighlighted =
+                  selectedPerson && participants.includes(selectedPerson);
+                const displayPrice =
+                  Number(item.price || 0) *
+                  (isIndividual ? getItemTotalQuantity(item) : 1);
 
-                  return (
-                    <tr
-                      className={isHighlighted ? "person-menu-highlight" : ""}
-                      key={item.id}
-                    >
-                      <td className="menu-number">{index + 1}</td>
+                return (
+                  <tr
+                    className={isHighlighted ? "person-menu-highlight" : ""}
+                    key={item.id}
+                  >
+                    <td className="menu-number">{index + 1}</td>
+                    {roundsEnabled && (
                       <td>
-                        <b>{item.menu}</b>
+                        <span className="round-tag">{getItemRound(item)}차</span>
                       </td>
-                      <td>₩{money.format(displayPrice)}</td>
-                      <td>{getItemTotalQuantity(item)}</td>
-                      <td>{participants.length}</td>
-                      <td>
-                        <strong>
-                          {isIndividual
-                            ? `개당 ₩${money.format(Number(item.price || 0))}`
-                            : `₩${money.format(share)}`}
-                        </strong>
-                      </td>
-                      <td>
-                        {noteParts.length ? (
-                          <span className="note-list">
-                            {noteParts.map(({ person, quantity }, noteIndex) => (
-                              <span className="note-person-entry" key={person}>
-                                <span
-                                  className={
-                                    selectedPerson === person
-                                      ? "selected-note-person"
-                                      : ""
-                                  }
-                                >
-                                  {person}
-                                </span>
-                                {isIndividual ? ` ${quantity}개` : ""}
-                                {noteIndex < noteParts.length - 1 ? "," : ""}
+                    )}
+                    <td>
+                      <b>{item.menu}</b>
+                    </td>
+                    <td>₩{money.format(displayPrice)}</td>
+                    <td>{getItemTotalQuantity(item)}</td>
+                    <td>{participants.length}</td>
+                    <td>
+                      <strong>
+                        {isIndividual
+                          ? `개당 ₩${money.format(Number(item.price || 0))}`
+                          : `₩${money.format(share)}`}
+                      </strong>
+                    </td>
+                    <td>
+                      {noteParts.length ? (
+                        <span className="note-list">
+                          {noteParts.map(({ person, quantity }, noteIndex) => (
+                            <span className="note-person-entry" key={person}>
+                              <span
+                                className={
+                                  selectedPerson === person
+                                    ? "selected-note-person"
+                                    : ""
+                                }
+                              >
+                                {person}
                               </span>
-                            ))}
-                          </span>
-                        ) : (
-                          "선택된 사람 없음"
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                              {isIndividual ? ` ${quantity}개` : ""}
+                              {noteIndex < noteParts.length - 1 ? "," : ""}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        "선택된 사람 없음"
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -176,6 +238,56 @@ function ResultStep({ people, items, onBack }) {
       >
         {imageButtonText("menu", "메뉴별 분배 내역 이미지 저장")}
       </button>
+      {roundSummaries.length > 0 && (
+        <>
+          <section className="round-summary">
+            <div className="section-heading">
+              <div>
+                <p>ROUNDS</p>
+                <h2>차수별 정산 금액</h2>
+              </div>
+              <span>{roundSummaries.length}개 차수</span>
+            </div>
+            <div className="round-summary-list" ref={roundCardRef}>
+              {roundSummaries.map(({ round, count, total, totals: roundTotals }) => (
+                <article className="card round-card" key={round}>
+                  <div className="round-card-head">
+                    <b>{round}차</b>
+                    <span>{count}개 메뉴</span>
+                    <strong>₩{money.format(total)}</strong>
+                  </div>
+                  <div className="round-card-people">
+                    {people
+                      .filter((person) => Math.round(roundTotals[person]) > 0)
+                      .map((person) => (
+                        <span
+                          className={`round-person ${
+                            selectedPerson === person ? "selected" : ""
+                          }`}
+                          key={person}
+                        >
+                          {person}
+                          <b>
+                            {money.format(Math.round(roundTotals[person]))}원
+                          </b>
+                        </span>
+                      ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+          <button
+            className="image-save-button"
+            onClick={() =>
+              saveImage(roundCardRef, "차수별정산금액", "round", "#f5f4ee")
+            }
+            disabled={Boolean(imageProgress.section)}
+          >
+            {imageButtonText("round", "차수별 정산 금액 이미지 저장")}
+          </button>
+        </>
+      )}
       <div className="people-summary">
         <div className="section-heading people-heading">
           <div>
@@ -221,16 +333,7 @@ function ResultStep({ people, items, onBack }) {
         <div className="result-buttons">
           <button
             className="copy-button"
-            onClick={() =>
-              navigator.clipboard?.writeText(
-                Object.entries(totals)
-                  .map(
-                    ([person, total]) =>
-                      `${person}: ${money.format(Math.round(total))}원`,
-                  )
-                  .join("\n"),
-              )
-            }
+            onClick={() => navigator.clipboard?.writeText(buildCopyText())}
           >
             결과 복사
           </button>

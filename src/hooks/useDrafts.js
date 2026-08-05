@@ -16,9 +16,15 @@ export const useDrafts = () => {
   const [currentDraftId, setCurrentDraftId] = useState("");
   const [draftSaved, setDraftSaved] = useState(false);
 
-  const saveDraft = (people, items) => {
+  const saveDraft = (people, items, roundsEnabled = false) => {
     const id = currentDraftId || crypto.randomUUID();
-    const draft = { id, people, items, updatedAt: new Date().toISOString() };
+    const draft = {
+      id,
+      people,
+      items,
+      roundsEnabled,
+      updatedAt: new Date().toISOString(),
+    };
     const nextDrafts = [draft, ...drafts.filter((entry) => entry.id !== id)];
 
     try {
