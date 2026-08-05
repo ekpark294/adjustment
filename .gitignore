@@ -105,6 +105,8 @@ Thumbs.db
 !mobile/assets/favicon.png
 # docs/ 하위 PNG 파일 추적 허용
 !docs/**/*.png
+# public/ 하위 PNG 추적 허용 (OG 이미지 등 배포에 반드시 포함돼야 하는 정적 자산)
+!public/*.png
 
 # electron 파일(한 곳에서 관리 되는 중)
 electron/
