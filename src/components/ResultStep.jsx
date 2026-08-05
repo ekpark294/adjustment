@@ -273,7 +273,7 @@ function ResultStep({ people, items, roundsEnabled, onBack }) {
                           }`}
                           key={person}
                         >
-                          {person}
+                          <span>{person}</span>
                           <b>
                             {money.format(Math.round(roundTotals[person]))}원
                           </b>
