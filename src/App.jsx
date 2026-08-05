@@ -7,6 +7,11 @@ import SitePage from "./components/SitePage";
 import ResultStep from "./components/ResultStep";
 import { useDrafts } from "./hooks/useDrafts";
 import { getItemRound } from "./utils/settlement";
+import {
+  clearShareHash,
+  decodeSettlement,
+  readShareToken,
+} from "./utils/shareLink";
 
 const createInitialItem = () => ({
   id: crypto.randomUUID(),
@@ -38,6 +43,29 @@ function App() {
   const [roundsEnabled, setRoundsEnabled] = useState(false);
   // 마지막으로 다룬 차수. 새 메뉴가 이 값을 이어받는다.
   const [activeRound, setActiveRound] = useState(1);
+  // 공유 링크로 들어온 경우의 정산 내역. 내 정산과 섞이지 않도록 따로 둔다.
+  const [shared, setShared] = useState(() =>
+    decodeSettlement(readShareToken()),
+  );
+
+  /** 공유받은 내역을 내 정산으로 가져와 이어서 수정한다. */
+  const continueFromShared = () => {
+    setPeople(shared.people);
+    setItems(shared.items);
+    setRoundsEnabled(shared.roundsEnabled);
+    setActiveRound(getItemRound(shared.items[0]));
+    clearShareHash();
+    setShared(null);
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const leaveShared = () => {
+    clearShareHash();
+    setShared(null);
+    setStep(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const { drafts, draftSaved, saveDraft, deleteDraft, selectDraft } =
     useDrafts();
 
@@ -89,9 +117,25 @@ function App() {
           : "한입정산 | 모임 정산·더치페이 계산기";
   }, [page]);
 
+  const isSharedView = page === "app" && Boolean(shared);
+  const isApp = page === "app" && !shared;
+
   return (
     <main className="shell">
-      <Header step={page === "app" ? step : 0} onHome={() => navigate("app")} />
+      <Header
+        step={isApp ? step : isSharedView ? 3 : 0}
+        onHome={() => navigate("app")}
+      />
+      {isSharedView && (
+        <ResultStep
+          people={shared.people}
+          items={shared.items}
+          roundsEnabled={shared.roundsEnabled}
+          sharedView
+          onContinue={continueFromShared}
+          onBack={leaveShared}
+        />
+      )}
       {page === "guide" && <SitePage type="guide" onHome={() => navigate("app")} />}
       {page === "privacy" && (
         <SitePage type="privacy" onHome={() => navigate("app")} />
@@ -100,7 +144,7 @@ function App() {
       {page === "examples" && (
         <SitePage type="examples" onHome={() => navigate("app")} />
       )}
-      {page === "app" && step === 1 && (
+      {isApp && step === 1 && (
         <ParticipantsStep
           name={name}
           setName={setName}
@@ -114,7 +158,7 @@ function App() {
           onNext={() => setStep(2)}
         />
       )}
-      {page === "app" && step === 2 && (
+      {isApp && step === 2 && (
         <OrdersStep
           people={people}
           items={items}
@@ -129,7 +173,7 @@ function App() {
           onResult={() => setStep(3)}
         />
       )}
-      {page === "app" && step === 3 && (
+      {isApp && step === 3 && (
         <ResultStep
           people={people}
           items={items}

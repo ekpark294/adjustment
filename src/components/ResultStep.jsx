@@ -12,11 +12,19 @@ import {
   isIndividualQuantityItem,
   money,
 } from "../utils/settlement";
+import { buildShareUrl } from "../utils/shareLink";
 
 const wait = (milliseconds) =>
   new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
-function ResultStep({ people, items, roundsEnabled, onBack }) {
+function ResultStep({
+  people,
+  items,
+  roundsEnabled,
+  sharedView = false,
+  onContinue,
+  onBack,
+}) {
   const totalRef = useRef(null);
   const menuTableRef = useRef(null);
   const roundCardRef = useRef(null);
@@ -26,6 +34,7 @@ function ResultStep({ people, items, roundsEnabled, onBack }) {
     percent: 0,
   });
   const [selectedPerson, setSelectedPerson] = useState("");
+  const [shareCopied, setShareCopied] = useState(false);
   const totals = useMemo(() => calculateTotals(people, items), [people, items]);
   const grandTotal = useMemo(() => calculateGrandTotal(items), [items]);
   const filledItems = useMemo(
@@ -116,6 +125,29 @@ function ResultStep({ people, items, roundsEnabled, onBack }) {
     return [...lines, ...roundLines].join("\n");
   };
 
+  /** 모바일에서는 기본 공유 시트를, 그 외에는 클립보드 복사를 쓴다. */
+  const shareResult = async () => {
+    const url = buildShareUrl(people, items, roundsEnabled);
+    const canNativeShare =
+      Boolean(navigator.share) &&
+      window.matchMedia("(pointer: coarse)").matches;
+
+    try {
+      if (canNativeShare) {
+        await navigator.share({ title: "한입정산 정산 결과", url });
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 1800);
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      console.error("공유 링크를 만들지 못했습니다.", error);
+      window.alert("공유 링크를 복사하지 못했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
   const imageButtonText = (section, defaultText) =>
     imageProgress.section === section
       ? `이미지 생성 ${imageProgress.percent}%`
@@ -123,10 +155,24 @@ function ResultStep({ people, items, roundsEnabled, onBack }) {
 
   return (
     <section className="page result">
-      <p className="eyebrow">STEP 03</p>
+      <p className="eyebrow">{sharedView ? "SHARED" : "STEP 03"}</p>
       <h1>
-        깔끔하게 <em>나눴어요.</em>
+        {sharedView ? (
+          <>
+            공유받은 <em>정산 내역이에요.</em>
+          </>
+        ) : (
+          <>
+            깔끔하게 <em>나눴어요.</em>
+          </>
+        )}
       </h1>
+      {sharedView && (
+        <p className="shared-notice">
+          링크에 담긴 내역을 그대로 보여드려요. 이 화면에서 수정해도 보낸 사람의
+          내역은 바뀌지 않아요.
+        </p>
+      )}
       <div className="total" ref={totalRef}>
         <span>총 주문 금액</span>
         <strong>
@@ -335,7 +381,7 @@ function ResultStep({ people, items, roundsEnabled, onBack }) {
       </button>
       <div className="actions">
         <button className="back" onClick={onBack}>
-          다시 수정하기
+          {sharedView ? "새로 정산하기" : "다시 수정하기"}
         </button>
         <div className="result-buttons">
           <button
@@ -344,6 +390,15 @@ function ResultStep({ people, items, roundsEnabled, onBack }) {
           >
             결과 복사
           </button>
+          {sharedView ? (
+            <button className="primary" onClick={onContinue}>
+              이 내역으로 계속하기
+            </button>
+          ) : (
+            <button className="share-button" onClick={shareResult}>
+              {shareCopied ? "링크 복사 완료" : "공유 링크"}
+            </button>
+          )}
         </div>
       </div>
     </section>

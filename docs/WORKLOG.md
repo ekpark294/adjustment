@@ -28,6 +28,7 @@
 - `docs/001.md`: 비고 표시 순서, 개별 수량, 광고 심사 대응 변경 사항
 - `docs/26-000_mobile_launch_foundation.md`: 모바일 앱 전환 및 배포 준비
 - `docs/26-001_rounds_and_participant_reorder.md`: 차수 정산 및 참여자 목록 편집
+- `docs/26-002_settlement_share_link.md`: 정산 결과 공유 링크
 
 ## 정산 계산 방식
 
@@ -106,6 +107,8 @@
 - 차수별 정산 금액 섹션에서 차수마다 메뉴 개수, 총액, 인원별 금액 표시
 - 인원별 정산 금액에서 선택한 인원을 차수별 카드에서도 강조
 - 인원별 결과를 텍스트로 클립보드에 복사하며, 차수 사용 시 차수별 내역도 함께 포함
+- `공유 링크` 버튼으로 정산 내역을 담은 URL 생성 (모바일은 기본 공유 시트, 그 외에는 클립보드 복사)
+- 공유 링크로 접속하면 읽기 전용 안내와 함께 결과 화면을 표시하며, `이 내역으로 계속하기`로 내 정산에 불러오기
 
 ### 사이트 정보 및 광고 심사 보강
 
@@ -213,6 +216,7 @@ npx vercel@37.14.0 --prod
 - `src/data/siteContent/`: 사용 안내, FAQ, 정산 예시, 개인정보처리방침 콘텐츠 데이터
 - `src/hooks/useDrafts.js`: 로컬 임시 저장 관리
 - `src/utils/settlement.js`: 정산 금액 계산과 금액 표시
+- `src/utils/shareLink.js`: 정산 내역의 공유 링크 생성과 해석
 - `src/utils/imageDownload.js`: PNG 이미지 생성 및 다운로드
 - `src/styles.css`: 전체 UI와 반응형 스타일
 - `src/main.jsx`: React 진입점
