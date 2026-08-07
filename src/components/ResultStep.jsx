@@ -87,13 +87,12 @@ function ResultStep({
     };
   }, [people, items, roundsEnabled, sharedView]);
 
-  const saveImage = async (
-    ref,
-    fileName,
-    section,
-    backgroundColor,
-    maxWidth,
-  ) => {
+  /**
+   * tight를 켜면 저장 직전에만 카드를 내용 폭으로 줄인다.
+   * html-to-image는 실제 요소의 계산된 스타일을 복제하므로, 잠깐 클래스를 붙였다 떼면 된다.
+   * 캔버스 폭을 강제로 줄이는 방식은 내용이 그보다 넓을 때 잘려서 쓸 수 없다.
+   */
+  const saveImage = async (ref, fileName, section, backgroundColor, tight) => {
     if (!ref.current || imageProgress.section) return;
 
     setImageProgress({ section, percent: 10 });
@@ -104,13 +103,14 @@ function ResultStep({
       }));
     }, 180);
 
+    if (tight) ref.current.classList.add("capture-tight");
+
     try {
       await downloadSectionImage(
         ref.current,
         fileName,
         section,
         backgroundColor,
-        maxWidth,
       );
       window.clearInterval(timer);
       setImageProgress({ section, percent: 100 });
@@ -120,6 +120,7 @@ function ResultStep({
       window.alert("이미지 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       window.clearInterval(timer);
+      ref.current?.classList.remove("capture-tight");
       setImageProgress({ section: "", percent: 0 });
     }
   };
@@ -375,6 +376,19 @@ function ResultStep({
             <h2>인원별 정산 금액</h2>
           </div>
         </div>
+        <p className={`people-guide ${selectedPerson ? "active" : ""}`}>
+          {selectedPerson ? (
+            <>
+              <b>{selectedPerson}</b> 님이 참여한 메뉴를 강조해서 보고 있어요.
+              한 번 더 누르면 해제됩니다.
+            </>
+          ) : (
+            <>
+              이름을 누르면 그 사람이 참여한 메뉴가 위쪽 분배 내역
+              {roundSummaries.length > 0 ? "과 차수별 금액" : ""}에서 강조돼요.
+            </>
+          )}
+        </p>
         <div className="card result-card" ref={peopleCardRef}>
           {people.map((person, index) => (
             <button
@@ -400,7 +414,7 @@ function ResultStep({
       <button
         className="image-save-button"
         onClick={() =>
-          saveImage(peopleCardRef, "인원별정산금액", "people", "#ffffff", 460)
+          saveImage(peopleCardRef, "인원별정산금액", "people", "#ffffff", true)
         }
         disabled={Boolean(imageProgress.section)}
       >
