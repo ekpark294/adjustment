@@ -87,7 +87,11 @@ function App() {
     const path = nextPage === "app" ? "/" : `/${nextPage}`;
     window.history.pushState({}, "", path);
     setPage(nextPage);
-    if (nextPage === "app") setStep(1);
+    if (nextPage === "app") {
+      setStep(1);
+      // 공유받은 내역을 비우지 않으면 첫 화면 대신 공유 화면이 계속 보인다.
+      setShared(null);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

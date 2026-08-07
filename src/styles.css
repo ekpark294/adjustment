@@ -8,7 +8,8 @@ button { cursor: pointer; }
 .shell { min-height: 100vh; overflow-x: clip; }
 header { height: 76px; padding: 0 max(28px, calc((100vw - 1100px) / 2)); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #deddd4; background: rgba(245,244,238,.9); }
 .brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 800; font-size: 19px; }
-.logo { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #e8ff59; }.logo svg { display: block; fill: #24251f; }
+.logo { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #e8ff59; }/* 탭 대상이 항상 링크가 되도록 한다. 안쪽 도형이 대상이 되면 일부 브라우저에서 클릭이 먹지 않는다. */
+.logo svg { display: block; fill: #24251f; pointer-events: none; }
 .version { margin-left: -4px; padding: 2px 6px; border-radius: 99px; color: #85857c; background: #e8e7df; font-size: 9px; font-weight: 700; line-height: 1.4; }
 .steps { display: flex; align-items: center; gap: 13px; color: #aaa99f; font-size: 12px; font-weight: 700; }
 .steps i { width: 28px; height: 1px; background: #d4d3ca; }.steps .active { color: #24251f; }

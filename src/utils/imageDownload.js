@@ -1,6 +1,6 @@
-export const downloadSectionImage = async (
+/** 이미지 데이터만 만든다. 저장과 분리해 두어야 결과를 눈으로 확인할 수 있다. */
+export const renderSectionImage = async (
   target,
-  fileName,
   sectionName,
   backgroundColor = "#f5f4ee",
 ) => {
@@ -39,7 +39,7 @@ export const downloadSectionImage = async (
     });
   }
 
-  const dataUrl = await toPng(target, {
+  return toPng(target, {
     backgroundColor,
     cacheBust: true,
     pixelRatio: 2,
@@ -47,6 +47,15 @@ export const downloadSectionImage = async (
     height: captureHeight,
     style: captureStyle,
   });
+};
+
+export const downloadSectionImage = async (
+  target,
+  fileName,
+  sectionName,
+  backgroundColor = "#f5f4ee",
+) => {
+  const dataUrl = await renderSectionImage(target, sectionName, backgroundColor);
   const link = document.createElement("a");
   link.download = `한입정산-${fileName}-${new Date().toISOString().slice(0, 10)}.png`;
   link.href = dataUrl;
