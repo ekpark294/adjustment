@@ -107,11 +107,17 @@ function ResultStep({
       }));
     }, 180);
 
+    // 화면 밖으로 보내는 건 감싸는 상자여야 한다.
+    // 카드 자체에 위치를 주면 그 값이 캡처용 복제본까지 따라가 캔버스 밖에 그려진다.
+    let holder = null;
     let offscreen = null;
     if (tight) {
+      holder = document.createElement("div");
+      holder.className = "capture-holder";
       offscreen = ref.current.cloneNode(true);
-      offscreen.classList.add("capture-tight", "capture-offscreen");
-      document.body.appendChild(offscreen);
+      offscreen.classList.add("capture-tight");
+      holder.appendChild(offscreen);
+      document.body.appendChild(holder);
     }
 
     try {
@@ -129,7 +135,7 @@ function ResultStep({
       window.alert("이미지 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       window.clearInterval(timer);
-      offscreen?.remove();
+      holder?.remove();
       setImageProgress({ section: "", percent: 0 });
     }
   };

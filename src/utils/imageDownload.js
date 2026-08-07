@@ -9,18 +9,25 @@ export const downloadSectionImage = async (
     ? target.scrollWidth
     : target.querySelector("table")?.scrollWidth || 0;
   // 폭을 임의로 줄이면 내용이 잘린다. 항상 실제 내용이 차지하는 만큼 잡는다.
+  // box-sizing이 border-box라 테두리를 포함하는 offsetWidth를 써야 한다.
+  // clientWidth를 쓰면 그 값을 width로 되돌릴 때 테두리 두께만큼 내용이 좁아져 끝이 잘린다.
   const captureWidth = Math.max(
-    target.clientWidth,
+    target.offsetWidth,
     target.scrollWidth,
     tableWidth,
   );
   const isTotal = sectionName === "total";
   const captureHeight =
-    Math.max(target.clientHeight, target.scrollHeight) + (isTotal ? 32 : 0);
+    Math.max(target.offsetHeight, target.scrollHeight) + (isTotal ? 32 : 0);
   const captureStyle = {
     width: `${captureWidth}px`,
     height: `${captureHeight}px`,
     overflow: "visible",
+    // 대상이 화면 밖에 배치돼 있어도 캔버스 원점에 그리도록 위치를 초기화한다.
+    // 이 값이 빠지면 복제본이 캔버스 밖에 그려져 빈 이미지가 나온다.
+    position: "static",
+    inset: "auto",
+    transform: "none",
   };
 
   if (isTotal) {
