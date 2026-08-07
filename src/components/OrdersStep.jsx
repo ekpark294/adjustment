@@ -213,7 +213,7 @@ function OrdersStep({
           </button>
         </div>
       )}
-      <div className="actions order-nav">
+      <div className="floating-actions order-actions">
         <button className="back" onClick={onBack}>
           이전
         </button>

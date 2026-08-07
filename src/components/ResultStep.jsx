@@ -406,7 +406,7 @@ function ResultStep({
       >
         {imageButtonText("people", "인원별 정산 금액 이미지 저장")}
       </button>
-      <div className="result-actions">
+      <div className="floating-actions result-actions">
         <button className="back" onClick={onBack}>
           {sharedView ? "새로 정산하기" : "다시 수정하기"}
         </button>
