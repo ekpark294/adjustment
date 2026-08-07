@@ -88,9 +88,13 @@ function ResultStep({
   }, [people, items, roundsEnabled, sharedView]);
 
   /**
-   * tight를 켜면 저장 직전에만 카드를 내용 폭으로 줄인다.
-   * html-to-image는 실제 요소의 계산된 스타일을 복제하므로, 잠깐 클래스를 붙였다 떼면 된다.
-   * 캔버스 폭을 강제로 줄이는 방식은 내용이 그보다 넓을 때 잘려서 쓸 수 없다.
+   * tight를 켜면 카드를 내용 폭까지 줄여서 저장한다.
+   *
+   * 폭은 저장 직전에 실제로 좁혀야 한다. html-to-image가 계산된 스타일을 픽셀 값으로
+   * 복제본에 그대로 옮기기 때문에, 캔버스 크기만 줄이면 내용이 잘린다.
+   *
+   * 대신 화면에 있는 카드를 건드리면 저장 중에 레이아웃이 흔들려 오작동처럼 보인다.
+   * 그래서 화면 밖에 복제본을 만들어 그것만 좁히고, 끝나면 지운다.
    */
   const saveImage = async (ref, fileName, section, backgroundColor, tight) => {
     if (!ref.current || imageProgress.section) return;
@@ -103,11 +107,16 @@ function ResultStep({
       }));
     }, 180);
 
-    if (tight) ref.current.classList.add("capture-tight");
+    let offscreen = null;
+    if (tight) {
+      offscreen = ref.current.cloneNode(true);
+      offscreen.classList.add("capture-tight", "capture-offscreen");
+      document.body.appendChild(offscreen);
+    }
 
     try {
       await downloadSectionImage(
-        ref.current,
+        offscreen || ref.current,
         fileName,
         section,
         backgroundColor,
@@ -120,7 +129,7 @@ function ResultStep({
       window.alert("이미지 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       window.clearInterval(timer);
-      ref.current?.classList.remove("capture-tight");
+      offscreen?.remove();
       setImageProgress({ section: "", percent: 0 });
     }
   };
