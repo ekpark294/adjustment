@@ -3,16 +3,22 @@ export const downloadSectionImage = async (
   fileName,
   sectionName,
   backgroundColor = "#f5f4ee",
+  maxWidth = 0,
 ) => {
   const { toPng } = await import("html-to-image");
   const tableWidth = target.matches?.("table")
     ? target.scrollWidth
     : target.querySelector("table")?.scrollWidth || 0;
-  const captureWidth = Math.max(
+  // 좁은 목록을 화면 폭 그대로 담으면 이름과 금액 사이가 크게 벌어진다.
+  // 상한을 주면 내용에 맞춰 좁게 잡혀 간격이 자연스러워진다.
+  const naturalWidth = Math.max(
     target.clientWidth,
     target.scrollWidth,
     tableWidth,
   );
+  const captureWidth = maxWidth
+    ? Math.min(naturalWidth, maxWidth)
+    : naturalWidth;
   const isTotal = sectionName === "total";
   const captureHeight =
     Math.max(target.clientHeight, target.scrollHeight) + (isTotal ? 32 : 0);

@@ -59,6 +59,14 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
 .round-summary { margin-top: 30px; }.round-summary-list { display: grid; gap: 10px; }.round-card { padding: 16px 18px; }.round-card-head { display: flex; align-items: center; gap: 10px; }.round-card-head b { flex: none; min-width: 40px; height: 26px; display: grid; place-items: center; border-radius: 999px; color: #4f5900; background: #eaff62; font-size: 12px; }.round-card-head span { color: #88887f; font-size: 11px; }.round-card-head strong { margin-left: auto; color: #4e5900; font-size: 16px; white-space: nowrap; }
 .round-card-people { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #ecebe5; }/* 칩이 줄어들면 이름이 줄바꿈되어 PNG 저장 시 레이아웃이 무너진다. 칩 단위로만 줄바꿈되게 고정한다. */
 .round-person { display: inline-flex; flex: none; align-items: center; gap: 6px; max-width: 100%; padding: 5px 11px; border: 1px solid #e6e5dd; border-radius: 999px; color: #62635b; background: #fafaf7; font-size: 11px; white-space: nowrap; }.round-person > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }.round-person b { flex: none; color: #24251f; font-size: 12px; }.round-person.selected { border-color: #cfdf45; color: #4e5900; background: #eef7a4; }.round-person.selected b { color: #3f4900; }
+/* 정산 결과의 조작 버튼은 스크롤과 무관하게 항상 닿을 수 있어야 한다.
+   PC는 본문 옆으로 떠 있는 패널, 모바일은 화면 아래 고정 막대로 둔다. */
+.result-actions { position: fixed; right: max(20px, calc((100vw - 1180px) / 2)); bottom: 26px; z-index: 40; display: flex; align-items: center; gap: 10px; padding: 11px 13px; border: 1px solid #e0dfd6; border-radius: 16px; background: rgba(255,255,255,.94); backdrop-filter: blur(10px); box-shadow: 0 16px 40px rgba(51,52,40,.16); }
+.result-actions .back { flex: none; padding: 0 10px; white-space: nowrap; }
+.result-actions .copy-button, .result-actions .share-button, .result-actions .primary { height: 46px; min-width: 0; margin: 0; padding: 0 16px; }
+/* 떠 있는 막대에 마지막 내용이 가리지 않도록 아래 여백을 둔다. */
+.result { padding-bottom: 150px; }
+.shell:has(.result-actions) .site-footer { padding-bottom: 40px; }
 .result-buttons { display: flex; gap: 8px; }.result-buttons .primary { min-width: 170px; }.copy-button { height: 52px; padding: 0 18px; border: 1px solid #d6d6ce; border-radius: 10px; color: #55564f; background: #fff; font-weight: 700; }
 .share-button { height: 52px; padding: 0 18px; border: 0; border-radius: 10px; color: #fff; background: #22231f; font-weight: 700; white-space: nowrap; }.share-button:hover { background: #3a3b34; }
 .share-loading { text-align: center; color: #85857c; font-size: 13px; }
@@ -113,6 +121,13 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
   .actions > .back { flex: none; }
   .result-buttons { min-width: 0; flex: 1; flex-direction: column; }
   .result-buttons .primary, .result-buttons .copy-button, .result-buttons .share-button { width: 100%; min-width: 0; margin: 0; }
+  /* 모바일은 화면 아래에 붙는 고정 막대. 홈 인디케이터 영역만큼 여백을 더한다. */
+  .result-actions { right: 0; left: 0; bottom: 0; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-width: 1px 0 0; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 24px rgba(51,52,40,.12); }
+  .result-actions .result-buttons { flex: 1; flex-direction: row; }
+  .result-actions .result-buttons .copy-button, .result-actions .result-buttons .share-button, .result-actions .result-buttons .primary { flex: 1; width: auto; padding: 0 8px; font-size: 13px; white-space: nowrap; }
+  .result-actions .back { padding: 0 6px; font-size: 13px; }
+  .result { padding-bottom: 140px; }
+  .shell:has(.result-actions) .site-footer { padding-bottom: 88px; }
   .order-nav { align-items: center; }
   .order-nav-buttons { min-width: 0; }
   .draft-save { padding: 0 12px; white-space: nowrap; }
@@ -131,6 +146,9 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
   .top-add, .round-toggle { flex: 1; min-width: 0; padding: 0 8px; }
   .round-select { flex-direction: column; align-items: flex-start; gap: 8px; }
   .fields label:first-child { grid-column: auto; }
+  .result-actions { gap: 6px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); }
+  .result-actions .result-buttons { gap: 6px; }
+  .result-actions .back, .result-actions .result-buttons .copy-button, .result-actions .result-buttons .share-button, .result-actions .result-buttons .primary { padding: 0 6px; font-size: 12px; }
   .actions:not(.order-nav) { flex-direction: column; }
   .actions:not(.order-nav) > .back { min-height: 42px; order: 2; }
   .result-buttons { order: 1; }

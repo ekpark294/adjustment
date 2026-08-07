@@ -87,7 +87,13 @@ function ResultStep({
     };
   }, [people, items, roundsEnabled, sharedView]);
 
-  const saveImage = async (ref, fileName, section, backgroundColor) => {
+  const saveImage = async (
+    ref,
+    fileName,
+    section,
+    backgroundColor,
+    maxWidth,
+  ) => {
     if (!ref.current || imageProgress.section) return;
 
     setImageProgress({ section, percent: 10 });
@@ -104,6 +110,7 @@ function ResultStep({
         fileName,
         section,
         backgroundColor,
+        maxWidth,
       );
       window.clearInterval(timer);
       setImageProgress({ section, percent: 100 });
@@ -393,13 +400,13 @@ function ResultStep({
       <button
         className="image-save-button"
         onClick={() =>
-          saveImage(peopleCardRef, "인원별정산금액", "people", "#ffffff")
+          saveImage(peopleCardRef, "인원별정산금액", "people", "#ffffff", 460)
         }
         disabled={Boolean(imageProgress.section)}
       >
         {imageButtonText("people", "인원별 정산 금액 이미지 저장")}
       </button>
-      <div className="actions">
+      <div className="result-actions">
         <button className="back" onClick={onBack}>
           {sharedView ? "새로 정산하기" : "다시 수정하기"}
         </button>
