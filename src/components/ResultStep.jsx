@@ -17,6 +17,20 @@ import { buildShareUrl } from "../utils/shareLink";
 const wait = (milliseconds) =>
   new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
+/** 방향 화살표. 폰트 글리프는 기준선 때문에 위치가 흔들려 도형으로 그린다. */
+const Arrow = ({ up = false }) => (
+  <svg viewBox="0 0 10 14" width="9" height="12" aria-hidden="true">
+    <path
+      d={up ? "M5 12.5V2.5M1.6 5.9 5 2.5l3.4 3.4" : "M5 1.5v10M1.6 8.1 5 11.5l3.4-3.4"}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 function ResultStep({
   people,
   items,
@@ -36,14 +50,10 @@ function ResultStep({
   const [selectedPerson, setSelectedPerson] = useState("");
   // "" | "loading" | "copied"
   const [shareState, setShareState] = useState("");
-  // key: order(등록순) | name | amount, reversed: 각 기준의 기본 방향을 뒤집을지
-  const [sort, setSort] = useState({ key: "order", reversed: false });
+  const [sort, setSort] = useState("order");
   const totals = useMemo(() => calculateTotals(people, items), [people, items]);
   const grandTotal = useMemo(() => calculateGrandTotal(items), [items]);
-  const filledItems = useMemo(
-    () => items.filter((item) => item.menu),
-    [items],
-  );
+  const filledItems = useMemo(() => items.filter((item) => item.menu), [items]);
 
   /** 입력 순서(오래된 것부터)를 유지하되, 차수를 쓰면 차수별로 묶어서 보여준다. */
   const orderedItems = useMemo(() => {
@@ -59,37 +69,20 @@ function ResultStep({
       .map(({ item }) => item);
   }, [filledItems, roundsEnabled]);
 
-  /**
-   * 정렬해도 번호는 등록 순서를 그대로 유지한다.
-   * 번호가 매번 바뀌면 같은 사람을 가리키는 표시가 아니게 된다.
-   */
+  /** 번호는 사람이 아니라 화면에 놓인 자리를 가리킨다. 어떻게 정렬해도 위에서부터 1, 2, 3으로 읽힌다. */
   const sortedPeople = useMemo(() => {
-    const entries = people.map((person, index) => ({ person, index }));
+    const amount = (person) => totals[person] || 0;
+    const byName = (a, b) => a.localeCompare(b, "ko");
 
-    if (sort.key === "name") {
-      entries.sort((a, b) => a.person.localeCompare(b.person, "ko"));
-    } else if (sort.key === "amount") {
-      entries.sort(
-        (a, b) => (totals[b.person] || 0) - (totals[a.person] || 0),
-      );
-    }
+    const compare = {
+      "name-asc": byName,
+      "name-desc": (a, b) => byName(b, a),
+      "amount-desc": (a, b) => amount(b) - amount(a),
+      "amount-asc": (a, b) => amount(a) - amount(b),
+    }[sort];
 
-    return sort.reversed ? entries.reverse() : entries;
+    return compare ? people.slice().sort(compare) : people;
   }, [people, totals, sort]);
-
-  /** 이미 고른 기준을 다시 누르면 방향만 뒤집는다. */
-  const changeSort = (key) =>
-    setSort((current) =>
-      current.key === key
-        ? { key, reversed: !current.reversed }
-        : { key, reversed: false },
-    );
-
-  const SORT_OPTIONS = [
-    { key: "order", label: "등록순" },
-    { key: "name", label: "이름 ㄱ→ㅎ", reversedLabel: "이름 ㅎ→ㄱ" },
-    { key: "amount", label: "금액 높은순", reversedLabel: "금액 낮은순" },
-  ];
 
   const roundSummaries = useMemo(() => {
     if (!roundsEnabled) return [];
@@ -273,7 +266,10 @@ function ResultStep({
           <span>{filledItems.length}개 메뉴</span>
         </div>
         <div className="table-scroll card">
-          <table className={roundsEnabled ? "has-round" : ""} ref={menuTableRef}>
+          <table
+            className={roundsEnabled ? "has-round" : ""}
+            ref={menuTableRef}
+          >
             <thead>
               <tr>
                 <th>번호</th>
@@ -313,7 +309,9 @@ function ResultStep({
                     <td className="menu-number">{index + 1}</td>
                     {roundsEnabled && (
                       <td>
-                        <span className="round-tag">{getItemRound(item)}차</span>
+                        <span className="round-tag">
+                          {getItemRound(item)}차
+                        </span>
                       </td>
                     )}
                     <td>
@@ -379,32 +377,34 @@ function ResultStep({
               <span>{roundSummaries.length}개 차수</span>
             </div>
             <div className="round-summary-list" ref={roundCardRef}>
-              {roundSummaries.map(({ round, count, total, totals: roundTotals }) => (
-                <article className="card round-card" key={round}>
-                  <div className="round-card-head">
-                    <b>{round}차</b>
-                    <span>{count}개 메뉴</span>
-                    <strong>₩{money.format(total)}</strong>
-                  </div>
-                  <div className="round-card-people">
-                    {people
-                      .filter((person) => Math.round(roundTotals[person]) > 0)
-                      .map((person) => (
-                        <span
-                          className={`round-person ${
-                            selectedPerson === person ? "selected" : ""
-                          }`}
-                          key={person}
-                        >
-                          <span>{person}</span>
-                          <b>
-                            {money.format(Math.round(roundTotals[person]))}원
-                          </b>
-                        </span>
-                      ))}
-                  </div>
-                </article>
-              ))}
+              {roundSummaries.map(
+                ({ round, count, total, totals: roundTotals }) => (
+                  <article className="card round-card" key={round}>
+                    <div className="round-card-head">
+                      <b>{round}차</b>
+                      <span>{count}개 메뉴</span>
+                      <strong>₩{money.format(total)}</strong>
+                    </div>
+                    <div className="round-card-people">
+                      {people
+                        .filter((person) => Math.round(roundTotals[person]) > 0)
+                        .map((person) => (
+                          <span
+                            className={`round-person ${
+                              selectedPerson === person ? "selected" : ""
+                            }`}
+                            key={person}
+                          >
+                            <span>{person}</span>
+                            <b>
+                              {money.format(Math.round(roundTotals[person]))}원
+                            </b>
+                          </span>
+                        ))}
+                    </div>
+                  </article>
+                ),
+              )}
             </div>
           </section>
           <button
@@ -426,21 +426,49 @@ function ResultStep({
           </div>
         </div>
         <div className="people-sort" role="group" aria-label="정렬 기준">
-          {SORT_OPTIONS.map(({ key, label, reversedLabel }) => {
-            const isActive = sort.key === key;
-
-            return (
-              <button
-                className={isActive ? "selected" : ""}
-                key={key}
-                onClick={() => changeSort(key)}
-                type="button"
-                aria-pressed={isActive}
-              >
-                {isActive && sort.reversed ? reversedLabel : label}
-              </button>
-            );
-          })}
+          <button
+            className={sort === "order" ? "selected" : ""}
+            onClick={() => setSort("order")}
+            type="button"
+            aria-pressed={sort === "order"}
+          >
+            <span className="sort-mark sort-bars">
+              <i />
+              <i />
+              <i />
+            </span>
+            등록순
+          </button>
+          <button
+            className={sort.startsWith("name") ? "selected" : ""}
+            onClick={() =>
+              setSort(sort === "name-asc" ? "name-desc" : "name-asc")
+            }
+            type="button"
+            aria-pressed={sort.startsWith("name")}
+            title="다시 누르면 반대 방향으로 정렬돼요"
+          >
+            <span className="sort-mark">
+              <em>{sort === "name-desc" ? "ㅎ" : "ㄱ"}</em>
+              <Arrow />
+              <em>{sort === "name-desc" ? "ㄱ" : "ㅎ"}</em>
+            </span>
+            이름순
+          </button>
+          <button
+            className={sort.startsWith("amount") ? "selected" : ""}
+            onClick={() =>
+              setSort(sort === "amount-desc" ? "amount-asc" : "amount-desc")
+            }
+            type="button"
+            aria-pressed={sort.startsWith("amount")}
+            title="다시 누르면 반대 방향으로 정렬돼요"
+          >
+            <span className="sort-mark">
+              <Arrow up={sort === "amount-asc"} />
+            </span>
+            금액 {sort === "amount-asc" ? "낮은순" : "높은순"}
+          </button>
         </div>
         <p className={`people-guide ${selectedPerson ? "active" : ""}`}>
           {selectedPerson ? (
@@ -456,7 +484,7 @@ function ResultStep({
           )}
         </p>
         <div className="card result-card" ref={peopleCardRef}>
-          {sortedPeople.map(({ person, index }) => (
+          {sortedPeople.map((person, index) => (
             <button
               className={`result-row ${
                 selectedPerson === person ? "selected" : ""

@@ -8,8 +8,10 @@ button { cursor: pointer; }
 .shell { min-height: 100vh; overflow-x: clip; }
 header { height: 76px; padding: 0 max(28px, calc((100vw - 1100px) / 2)); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #deddd4; background: rgba(245,244,238,.9); }
 .brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 800; font-size: 19px; }
-.logo { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #e8ff59; }/* 탭 대상이 항상 링크가 되도록 한다. 안쪽 도형이 대상이 되면 일부 브라우저에서 클릭이 먹지 않는다. */
-.logo svg { display: block; fill: #24251f; pointer-events: none; }
+/* 로고 이미지가 원형 배경을 포함하고 있어 따로 배경을 두지 않는다. */
+.logo { width: 40px; height: 40px; flex: none; display: grid; place-items: center; }
+/* 탭 대상이 항상 링크가 되도록 한다. 이미지가 대상이 되면 일부 브라우저에서 클릭이 먹지 않는다. */
+.logo img { width: 100%; height: 100%; display: block; object-fit: contain; pointer-events: none; }
 .version { margin-left: -4px; padding: 2px 6px; border-radius: 99px; color: #85857c; background: #e8e7df; font-size: 9px; font-weight: 700; line-height: 1.4; }
 .steps { display: flex; align-items: center; gap: 13px; color: #aaa99f; font-size: 12px; font-weight: 700; }
 .steps i { width: 28px; height: 1px; background: #d4d3ca; }.steps .active { color: #24251f; }
@@ -61,6 +63,9 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
 .round-person { display: inline-flex; flex: none; align-items: center; gap: 6px; max-width: 100%; padding: 5px 11px; border: 1px solid #e6e5dd; border-radius: 999px; color: #62635b; background: #fafaf7; font-size: 11px; white-space: nowrap; }.round-person > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }.round-person b { flex: none; color: #24251f; font-size: 12px; }.round-person.selected { border-color: #cfdf45; color: #4e5900; background: #eef7a4; }.round-person.selected b { color: #3f4900; }
 /* 조작 버튼은 스크롤과 무관하게 항상 닿을 수 있어야 한다.
    PC에서는 세로로 쌓아 본문 오른쪽에 붙인다. 가로로 늘어놓으면 본문을 넓게 가린다. */
+/* 상자로 감싸지 않는다. 버튼 하나하나가 떠 있는 형태라 본문을 덜 가리고 덜 무겁다. */
+/* 조작 버튼은 스크롤과 무관하게 항상 닿을 수 있어야 한다.
+   PC에서는 세로로 쌓아 본문 오른쪽에 붙인다. 가로로 늘어놓으면 본문을 넓게 가린다. */
 .floating-actions { position: fixed; right: max(16px, calc((100vw - 1090px) / 2)); bottom: 26px; z-index: 40; display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 172px; padding: 10px; border: 1px solid #e0dfd6; border-radius: 16px; background: rgba(255,255,255,.93); backdrop-filter: blur(10px); box-shadow: 0 16px 40px rgba(51,52,40,.16); }
 .floating-actions .result-buttons, .floating-actions .order-nav-buttons { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .floating-actions .primary, .floating-actions .copy-button, .floating-actions .share-button, .floating-actions .draft-save { width: 100%; min-width: 0; height: 44px; margin: 0; padding: 0 12px; font-size: 13px; white-space: nowrap; }
@@ -76,6 +81,18 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
 .shared-notice { margin: 20px 0 0; padding: 14px 16px; border: 1px solid #dfe6ad; border-radius: 12px; color: #5d6600; background: #f9ffdc; font-size: 13px; line-height: 1.7; }
 /* 이미지 저장 순간에만 적용된다. 카드를 내용 폭까지 줄여 이름과 금액 사이 여백을 없앤다.
    행은 그대로 카드 폭을 채우므로 금액 우측 정렬은 유지되고, 잘리지도 않는다. */
+/* 정렬 기준. 방향은 글자 대신 화살표로 보여주고, 같은 칩을 다시 누르면 뒤집힌다. */
+.people-sort { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin: 0 2px 10px; }
+.people-sort button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px 0 10px; border: 1px solid #dcdcd4; border-radius: 999px; color: #77786f; background: #fff; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.people-sort button:hover { border-color: #b9cc32; color: #5d6600; }
+.people-sort button.selected { border-color: #b9cc32; color: #4f5900; background: #faffdc; }
+.sort-mark { display: inline-flex; align-items: center; gap: 1px; color: #b3b3a8; }
+.sort-mark em { font-size: 9px; font-style: normal; font-weight: 800; line-height: 1; }
+.people-sort button.selected .sort-mark { color: #8a9c14; }
+/* 등록순은 방향이 없으므로 목록 모양으로 표시한다. */
+.sort-bars { flex-direction: column; gap: 2px; width: 11px; }
+.sort-bars i { height: 1.6px; border-radius: 1px; background: currentColor; }
+.sort-bars i:nth-child(1) { width: 100%; }.sort-bars i:nth-child(2) { width: 72%; }.sort-bars i:nth-child(3) { width: 44%; }
 .capture-tight { width: max-content; max-width: none; min-width: 260px; }
 /* 저장용 복제본을 담는 상자. 화면 밖에 두되 레이아웃은 실제로 잡혀야 캡처가 된다.
    위치는 반드시 이 상자에만 준다. 캡처 대상 자체에 주면 그 값이 복제본까지 따라가
@@ -89,7 +106,7 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
 @media (max-width: 600px) {
   header { height: 64px; padding: 0 16px; }
   .brand { font-size: 16px; white-space: nowrap; }
-  .logo { width: 31px; height: 31px; }
+  .logo { width: 34px; height: 34px; }
   .steps { gap: 8px; }
   .steps span { display: none; }
   .steps i { width: 10px; }
@@ -132,6 +149,7 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
   .result-buttons { min-width: 0; flex: 1; flex-direction: column; }
   .result-buttons .primary, .result-buttons .copy-button, .result-buttons .share-button { width: 100%; min-width: 0; margin: 0; }
   /* 모바일은 화면 아래에 붙는 고정 막대. 홈 인디케이터 영역만큼 여백을 더한다. */
+  /* 모바일은 화면 아래에 붙는 가로 막대. 홈 인디케이터 영역만큼 여백을 더한다. */
   /* 모바일은 화면 아래에 붙는 가로 막대. 홈 인디케이터 영역만큼 여백을 더한다. */
   .floating-actions { right: 0; left: 0; bottom: 0; width: auto; flex-direction: row; align-items: center; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); border-width: 1px 0 0; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 24px rgba(51,52,40,.12); }
   .floating-actions .result-buttons, .floating-actions .order-nav-buttons { flex: 1; flex-direction: row; }
