@@ -68,13 +68,15 @@ input:focus { border-color: #9cae20; box-shadow: 0 0 0 3px rgba(166,186,41,.12);
    PC에서는 세로로 쌓아 본문 오른쪽에 붙인다. 가로로 늘어놓으면 본문을 넓게 가린다. */
 .floating-actions { position: fixed; right: max(16px, calc((100vw - 1090px) / 2)); bottom: 26px; z-index: 40; display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 172px; padding: 10px; border: 1px solid #e0dfd6; border-radius: 16px; background: rgba(255,255,255,.93); backdrop-filter: blur(10px); box-shadow: 0 16px 40px rgba(51,52,40,.16); }
 .floating-actions .result-buttons, .floating-actions .order-nav-buttons { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.floating-actions .primary, .floating-actions .copy-button, .floating-actions .share-button, .floating-actions .draft-save { width: 100%; min-width: 0; height: 44px; margin: 0; padding: 0 12px; font-size: 13px; white-space: nowrap; }
+/* 폭은 패널에 맞춰 고정한다. 긴 문구가 들어와도 버튼이 늘어나 패널을 삐져나오지 않도록,
+   넘치는 글자는 말줄임으로 처리한다. */
+.floating-actions .primary, .floating-actions .copy-button, .floating-actions .share-button, .floating-actions .draft-save { width: 100%; min-width: 0; height: 44px; margin: 0; padding: 0 12px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .floating-actions .primary span { margin-left: 8px; }
 .floating-actions .back { order: 9; min-height: 34px; padding: 0; font-size: 12px; }
 /* 떠 있는 버튼에 마지막 내용이 가리지 않도록 아래 여백을 둔다. */
 .orders, .result { padding-bottom: 150px; }
 .shell:has(.floating-actions) .site-footer { padding-bottom: 40px; }
-.result-buttons { display: flex; gap: 8px; }.result-buttons .primary { min-width: 170px; }.copy-button { height: 52px; padding: 0 18px; border: 1px solid #d6d6ce; border-radius: 10px; color: #55564f; background: #fff; font-weight: 700; }
+.result-buttons { display: flex; gap: 8px; }.copy-button { height: 52px; padding: 0 18px; border: 1px solid #d6d6ce; border-radius: 10px; color: #55564f; background: #fff; font-weight: 700; }
 .share-button { height: 52px; padding: 0 18px; border: 0; border-radius: 10px; color: #fff; background: #22231f; font-weight: 700; white-space: nowrap; }.share-button:hover { background: #3a3b34; }
 .share-loading { text-align: center; color: #85857c; font-size: 13px; }
 .share-expired { text-align: center; }.share-expired .lead { margin-bottom: 0; }

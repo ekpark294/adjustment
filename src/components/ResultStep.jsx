@@ -527,7 +527,7 @@ function ResultStep({
           </button>
           {sharedView ? (
             <button className="primary" onClick={onContinue}>
-              이 내역으로 계속하기
+              이어서 수정하기
             </button>
           ) : (
             <button
