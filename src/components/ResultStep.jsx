@@ -34,8 +34,10 @@ function ResultStep({
     percent: 0,
   });
   const [selectedPerson, setSelectedPerson] = useState("");
-  const [shareCopied, setShareCopied] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
+  // "" | "loading" | "copied"
+  const [shareState, setShareState] = useState("");
+  // key: order(등록순) | name | amount, reversed: 각 기준의 기본 방향을 뒤집을지
+  const [sort, setSort] = useState({ key: "order", reversed: false });
   const totals = useMemo(() => calculateTotals(people, items), [people, items]);
   const grandTotal = useMemo(() => calculateGrandTotal(items), [items]);
   const filledItems = useMemo(
@@ -57,6 +59,38 @@ function ResultStep({
       .map(({ item }) => item);
   }, [filledItems, roundsEnabled]);
 
+  /**
+   * 정렬해도 번호는 등록 순서를 그대로 유지한다.
+   * 번호가 매번 바뀌면 같은 사람을 가리키는 표시가 아니게 된다.
+   */
+  const sortedPeople = useMemo(() => {
+    const entries = people.map((person, index) => ({ person, index }));
+
+    if (sort.key === "name") {
+      entries.sort((a, b) => a.person.localeCompare(b.person, "ko"));
+    } else if (sort.key === "amount") {
+      entries.sort(
+        (a, b) => (totals[b.person] || 0) - (totals[a.person] || 0),
+      );
+    }
+
+    return sort.reversed ? entries.reverse() : entries;
+  }, [people, totals, sort]);
+
+  /** 이미 고른 기준을 다시 누르면 방향만 뒤집는다. */
+  const changeSort = (key) =>
+    setSort((current) =>
+      current.key === key
+        ? { key, reversed: !current.reversed }
+        : { key, reversed: false },
+    );
+
+  const SORT_OPTIONS = [
+    { key: "order", label: "등록순" },
+    { key: "name", label: "이름 ㄱ→ㅎ", reversedLabel: "이름 ㅎ→ㄱ" },
+    { key: "amount", label: "금액 높은순", reversedLabel: "금액 낮은순" },
+  ];
+
   const roundSummaries = useMemo(() => {
     if (!roundsEnabled) return [];
 
@@ -73,19 +107,6 @@ function ResultStep({
       };
     });
   }, [filledItems, people, roundsEnabled]);
-
-  useEffect(() => {
-    if (sharedView) return undefined;
-
-    let cancelled = false;
-    buildShareUrl(people, items, roundsEnabled).then((url) => {
-      if (!cancelled) setShareUrl(url);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [people, items, roundsEnabled, sharedView]);
 
   /**
    * tight를 켜면 카드를 내용 폭까지 줄여서 저장한다.
@@ -163,31 +184,44 @@ function ResultStep({
   };
 
   /**
+   * 링크는 버튼을 누른 시점에 만든다.
+   * 미리 만들어 두면 공유할 생각이 없는 사람의 내역까지 서버에 저장된다.
+   *
    * 모바일에서는 기본 공유 시트를, 그 외에는 클립보드 복사를 쓴다.
-   * 링크는 미리 만들어 둔다. iOS Safari는 사용자 조작 직후에만 공유 시트를 열어주므로,
-   * 버튼을 누른 뒤 압축이 끝나기를 기다리면 공유가 차단될 수 있다.
+   * iOS Safari는 사용자 조작 직후에만 공유 시트를 열어 주는데, 링크를 만드는 사이에
+   * 그 자격이 사라질 수 있다. 그때는 예외를 잡아 복사로 넘어간다.
    */
   const shareResult = async () => {
-    if (!shareUrl) return;
-
-    const url = shareUrl;
-    const canNativeShare =
-      Boolean(navigator.share) &&
-      window.matchMedia("(pointer: coarse)").matches;
+    if (shareState === "loading") return;
+    setShareState("loading");
 
     try {
+      const url = await buildShareUrl(people, items, roundsEnabled);
+      const canNativeShare =
+        Boolean(navigator.share) &&
+        window.matchMedia("(pointer: coarse)").matches;
+
       if (canNativeShare) {
-        await navigator.share({ title: "한입정산 정산 결과", url });
-        return;
+        try {
+          await navigator.share({ title: "한입정산 정산 결과", url });
+          setShareState("");
+          return;
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            setShareState("");
+            return;
+          }
+          console.error("공유 시트를 열지 못해 복사로 대체합니다.", error);
+        }
       }
 
       await navigator.clipboard.writeText(url);
-      setShareCopied(true);
-      window.setTimeout(() => setShareCopied(false), 1800);
+      setShareState("copied");
+      window.setTimeout(() => setShareState(""), 1800);
     } catch (error) {
-      if (error?.name === "AbortError") return;
       console.error("공유 링크를 만들지 못했습니다.", error);
-      window.alert("공유 링크를 복사하지 못했습니다. 잠시 후 다시 시도해주세요.");
+      window.alert("공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해주세요.");
+      setShareState("");
     }
   };
 
@@ -391,6 +425,23 @@ function ResultStep({
             <h2>인원별 정산 금액</h2>
           </div>
         </div>
+        <div className="people-sort" role="group" aria-label="정렬 기준">
+          {SORT_OPTIONS.map(({ key, label, reversedLabel }) => {
+            const isActive = sort.key === key;
+
+            return (
+              <button
+                className={isActive ? "selected" : ""}
+                key={key}
+                onClick={() => changeSort(key)}
+                type="button"
+                aria-pressed={isActive}
+              >
+                {isActive && sort.reversed ? reversedLabel : label}
+              </button>
+            );
+          })}
+        </div>
         <p className={`people-guide ${selectedPerson ? "active" : ""}`}>
           {selectedPerson ? (
             <>
@@ -405,7 +456,7 @@ function ResultStep({
           )}
         </p>
         <div className="card result-card" ref={peopleCardRef}>
-          {people.map((person, index) => (
+          {sortedPeople.map(({ person, index }) => (
             <button
               className={`result-row ${
                 selectedPerson === person ? "selected" : ""
@@ -451,8 +502,16 @@ function ResultStep({
               이 내역으로 계속하기
             </button>
           ) : (
-            <button className="share-button" onClick={shareResult}>
-              {shareCopied ? "링크 복사 완료" : "공유 링크"}
+            <button
+              className="share-button"
+              onClick={shareResult}
+              disabled={shareState === "loading"}
+            >
+              {shareState === "loading"
+                ? "링크 만드는 중…"
+                : shareState === "copied"
+                  ? "링크 복사 완료"
+                  : "공유 링크"}
             </button>
           )}
         </div>

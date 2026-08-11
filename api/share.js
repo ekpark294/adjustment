@@ -39,9 +39,18 @@ export default async function handler(request, response) {
   if (!allow(`write:${clientIp(request)}`, RATE_LIMIT, RATE_WINDOW_SECONDS * 1000)) {
     return response.status(429).json({ error: "잠시 후 다시 시도해주세요." });
   }
+  // 두 원인을 구분해서 알린다. 메시지가 같으면 어느 설정이 빠졌는지 알 수 없다.
+  if (!isConfigured()) {
+    return response
+      .status(503)
+      .json({ error: "저장소가 설정되지 않았습니다.", missing: "storage" });
+  }
   // 암호화 열쇠가 없으면 저장하지 않는다. 평문으로 남기느니 긴 링크로 되돌리는 편이 낫다.
-  if (!isConfigured() || !isEncryptionConfigured()) {
-    return response.status(503).json({ error: "저장소가 설정되지 않았습니다." });
+  if (!isEncryptionConfigured()) {
+    return response.status(503).json({
+      error: "암호화 열쇠(SHARE_SECRET)가 설정되지 않았습니다.",
+      missing: "secret",
+    });
   }
 
   const body =

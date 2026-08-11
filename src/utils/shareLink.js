@@ -174,12 +174,21 @@ const hashUrl = (token) =>
   `${window.location.origin}/#${SHARE_KEY}=${token}`;
 
 /**
- * 짧은 링크를 우선 시도한다.
- * 저장소가 없거나 요청이 실패하면 내역을 그대로 담은 해시 링크로 되돌아간다.
- * 링크는 길어지지만 공유 기능이 멈추지는 않는다.
+ * 메신저가 미리보기 카드를 만들 수 있는 URL 길이의 상한.
+ * 카카오톡은 URL이 길면 카드를 만들지 않고 주소를 그대로 노출한다.
+ * 정확한 한도가 공개돼 있지 않아 넉넉히 낮게 잡았다. 넘으면 서버에 저장해 짧은 주소를 쓴다.
+ */
+const MAX_INLINE_URL_LENGTH = 200;
+
+/**
+ * 링크가 짧으면 내역을 그대로 담아 서버를 쓰지 않는다.
+ * 길어지면 서버에 저장하고 짧은 주소를 받아 카드가 만들어지게 한다.
+ * 저장이 실패하면 긴 링크로 되돌아간다. 카드는 못 만들어도 공유 자체는 되어야 한다.
  */
 export const buildShareUrl = async (people, items, roundsEnabled) => {
   const token = await encodeSettlement(people, items, roundsEnabled);
+
+  if (hashUrl(token).length <= MAX_INLINE_URL_LENGTH) return hashUrl(token);
 
   try {
     const response = await fetch("/api/share", {
